@@ -36,7 +36,7 @@ namespace p4gpc.tinyadditions
         /// </summary>
         private IReloadedHooks _hooks;
 
-        private KeyPress _keyPress;
+        private Inputs _inputs;
 
         /// <summary>
         /// Entry point for your mod.
@@ -55,7 +55,7 @@ namespace p4gpc.tinyadditions
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
 
             /* Your mod code starts here. */
-            _keyPress = new KeyPress(_logger, _hooks, _configuration);
+            _inputs = new Inputs(_logger, _hooks, _configuration);
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)
@@ -76,12 +76,12 @@ namespace p4gpc.tinyadditions
         /* Mod loader actions. */
         public void Suspend()
         {
-            _keyPress.Suspend();
+            _inputs.Suspend();
         }
 
         public void Resume()
         {
-            _keyPress.Resume();
+            _inputs.Resume();
         }
 
         public void Unload()
