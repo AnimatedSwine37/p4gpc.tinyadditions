@@ -118,7 +118,26 @@ namespace p4gpc.tinyadditions
             {
                 _logger.WriteLine($"Input was {(Input)input}");
                 if (InEvent() && input == (int)Input.Down)
-                    _logger.WriteLine("Auto advance toggled (not implemented yet)");
+                {   
+                    try
+                    {
+                        _memory.SafeRead((IntPtr)(_baseAddress + 0x49DD563), out byte autoAdvance);
+                        // start bit in cheat engine is 3 so like 00010000 is what i want?
+                        // naw toggling it in cheat engine changes 6f to 67 so it's acctually the 5th bit
+                        _logger.WriteLine($"Looking at {Convert.ToString(autoAdvance, 2)}");
+                        autoAdvance ^= 0b00001000;
+                        _memory.SafeWrite((IntPtr)(_baseAddress + 0x49DD563), ref autoAdvance);
+                        _logger.WriteLine("Auto advance toggled");
+
+                    } catch (Exception e)
+                    {
+                        _logger.WriteLine($"[TinyAdditions] Couldn't read/write to address. {e.Message}");
+                    }
+                    
+                    
+
+                }
+                    
             }
             lastInput[1] = lastInput[0];
             lastInput[0] = input;
