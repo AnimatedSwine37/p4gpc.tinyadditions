@@ -117,7 +117,7 @@ namespace p4gpc.tinyadditions
             // Check if sprint was pressed
             if (_config.SprintEnabled && (input == (int)_config.SprintButton || (keyboard && InputInCombo(input, _config.SprintButton))))
                 _sprint.ToggleSprint();
-            if (_config.AdvanceEnabled && (input == (int)_config.AdvanceButton || (keyboard && InputInCombo(input, _config.AdvanceButton))))
+            if (_config.AdvanceEnabled && InEvent() && (input == (int)_config.AdvanceButton || (keyboard && InputInCombo(input, _config.AdvanceButton))))
                 _autoAdvanceToggle.ToggleAutoAdvance();
 
         }
