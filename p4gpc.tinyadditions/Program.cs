@@ -4,6 +4,7 @@ using Reloaded.Hooks.ReloadedII.Interfaces;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using System;
+using System.Diagnostics;
 
 namespace p4gpc.tinyadditions
 {
@@ -37,12 +38,14 @@ namespace p4gpc.tinyadditions
         private IReloadedHooks _hooks;
 
         private Inputs _inputs;
+        private Utils _utils;
 
         /// <summary>
         /// Entry point for your mod.
         /// </summary>
         public void Start(IModLoaderV1 loader)
         {
+            //Debugger.Launch();
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks);
@@ -55,7 +58,8 @@ namespace p4gpc.tinyadditions
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
 
             /* Your mod code starts here. */
-            _inputs = new Inputs(_logger, _hooks, _configuration);
+            _utils = new Utils(_configuration, _logger);
+            _inputs = new Inputs(_hooks, _configuration, _utils);
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)
@@ -67,10 +71,11 @@ namespace p4gpc.tinyadditions
 
             // Replace configuration with new.
             _configuration = (Config)obj;
-            _logger.WriteLine($"[{MyModId}] Config Updated: Applying");
+            _utils.Log("Config Updated: Applying");
 
             // Apply settings from configuration.
-            // ... your code here.
+            _inputs.UpdateConfiguration(_configuration);
+            _utils.Configuration = _configuration;
         }
 
         /* Mod loader actions. */

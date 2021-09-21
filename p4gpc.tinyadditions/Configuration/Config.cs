@@ -1,5 +1,6 @@
 ﻿using p4gpc.tinyadditions.Configuration.Implementation;
 using System.ComponentModel;
+using static p4gpc.tinyadditions.Utils;
 
 namespace p4gpc.tinyadditions.Configuration
 {
@@ -14,35 +15,24 @@ namespace p4gpc.tinyadditions.Configuration
             Need more config files/classes? See Configuration.cs
         */
 
+        [DisplayName("Sprint Button")]
+        [Description("The button you press to toggle sprint. This does not overwrite the button's function but adds to it " +
+            "(e.g. if you were to set the menu button it would toggle sprint and open the menu)")]
+        public Input SprintButton { get; set; } = Input.Circle;
 
-        [DisplayName("String")]
-        [Description("This is a string.")]
-        public string String { get; set; } = "Default Name";
+        [DisplayName("Sprint")]
+        [Description("Enables you to sprint, slightly increasing your run speed. Pressing the sprint button toggles it.")]
+        public bool SprintEnabled { get; set; } = true;
 
-        [DisplayName("Int")]
-        [Description("This is an int.")]
-        public int Integer { get; set; } = 42;
+        [DisplayName("Sprint Speed")]
+        [Description("How much to multiply your speed by when sprinting (default is 1.3)")]
+        public float SprintSpeed { get; set; } = 1.3f;
 
-        [DisplayName("Bool")]
-        [Description("This is a bool.")]
-        public bool Boolean { get; set; } = true;
 
-        [DisplayName("Float")]
-        [Description("This is a floating point number.")]
-        public float Float { get; set; } = 6.987654F;
+        [DisplayName("Debug Mode")]
+        [Description("Logs additional information to the console that is useful for debugging.")]
+        public bool DebugEnabled { get; set; } = false;
 
-        [DisplayName("Enum")]
-        [Description("This is an enumerable.")]
-        public SampleEnum Reloaded { get; set; } = SampleEnum.ILoveIt;
 
-        public enum SampleEnum
-        {
-            NoOpinion,
-            Sucks,
-            IsMediocre,
-            IsOk,
-            IsCool,
-            ILoveIt
-        }
     }
 }
