@@ -33,7 +33,7 @@ namespace p4gpc.tinyadditions
                 _util.Log("Toggled Auto Advance");
             } catch (Exception e)
             {
-                _util.Log($"Couldn't Read or write address for auto advance toggle {e.Message}");
+                _util.LogError("Couldn't Read or write address for auto advance toggle", e);
             }
         }
     }
