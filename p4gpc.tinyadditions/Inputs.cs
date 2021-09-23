@@ -32,6 +32,7 @@ namespace p4gpc.tinyadditions
         private int _baseAddress;
         // Functionalities
         private Sprint _sprint;
+        private AutoAdvanceToggle _autoAdvanceToggle;
 
         // Current mod configuration
         private Config _config { get; set; }
@@ -87,7 +88,7 @@ namespace p4gpc.tinyadditions
             _utils.Log("Successfully hooked into input functions");
 
             _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
-
+            _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
         }
 
         public void Suspend()
@@ -116,6 +117,9 @@ namespace p4gpc.tinyadditions
             // Check if sprint was pressed
             if (_config.SprintEnabled && (input == (int)_config.SprintButton || (keyboard && InputInCombo(input, _config.SprintButton))))
                 _sprint.ToggleSprint();
+            if (_config.AdvanceEnabled && InEvent() && (input == (int)_config.AdvanceButton || (keyboard && InputInCombo(input, _config.AdvanceButton))))
+                _autoAdvanceToggle.ToggleAutoAdvance();
+
         }
 
         // Switches keyboard inputs to match controller ones
@@ -160,6 +164,7 @@ namespace p4gpc.tinyadditions
             // Check if the input isn't actually a combo, if so we can directly return it
             if (Enum.IsDefined(typeof(Input), inputCombo))
             {
+
                 foundInputs.Add((Input)inputCombo);
                 return foundInputs;
             }
