@@ -20,7 +20,7 @@ namespace p4gpc.tinyadditions
         // For calling C# code from ASM.
         private IReverseWrapper<KeyboardInputFunction> _keyboardReverseWrapper;
         private IReverseWrapper<ControllerInputFunction> _controllerReverseWrapper;
-        // For maniplulating input reading hooks
+        // For manipulating input reading hooks
         private IAsmHook _keyboardHook;
         private IAsmHook _controllerHook;
         // Keeps track of the last inputs for rising/falling edge detection
@@ -113,12 +113,8 @@ namespace p4gpc.tinyadditions
         // Function that reads all inputs
         private void InputHappened(int input, bool keyboard)
         {
-            _utils.LogDebug($"Input was {(Input)input}");
-            // Check if sprint was pressed
-            if (_config.SprintEnabled && (input == (int)_config.SprintButton || (keyboard && InputInCombo(input, _config.SprintButton))))
-                _sprint.ToggleSprint();
-            if (_config.AdvanceEnabled && InEvent() && (input == (int)_config.AdvanceButton || (keyboard && InputInCombo(input, _config.AdvanceButton))))
-                _autoAdvanceToggle.ToggleAutoAdvance();
+            // _memory.SafeRead((IntPtr)0x0019F33C, out int coolValue);
+            // _utils.LogDebug($"{coolValue}");
 
         }
 
