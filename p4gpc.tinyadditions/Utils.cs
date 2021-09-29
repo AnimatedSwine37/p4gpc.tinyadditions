@@ -35,17 +35,17 @@ namespace p4gpc.tinyadditions
         public void LogDebug(string message)
         {
             if(Configuration.DebugEnabled) 
-                _logger.WriteLine($"[TinyAdditions] {message}");
+                _logger.WriteLine($"[TwitchPlays] {message}");
         }
 
         public void Log(string message)
         {
-            _logger.WriteLine($"[TinyAdditions] {message}");
+            _logger.WriteLine($"[TwitchPlays] {message}");
         }
 
         public void LogError(string message, Exception e)
         {
-            _logger.WriteLine($"[TinyAdditions] {message}: {e.Message}", System.Drawing.Color.Red);
+            _logger.WriteLine($"[TwitchPlays] {message}: {e.Message}", System.Drawing.Color.Red);
         }
     }
 }
