@@ -1,7 +1,7 @@
 # p4gpc.twitchplays
 ### AKA Twitch Plays Persona 4 Golden
 
-[Cool tweet](https://twitter.com/rirurinuser/status/1443487438375034881)
+[Cool tweet demonstrating the program](https://twitter.com/rirurinuser/status/1443487438375034881)
 
 A [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II) Mod for Persona 4 Golden on PC that allows you or anyone else to control the game by typing into a Twitch chat. As this control is built into the game through the power of *assembly hooks and stuff*, this mod will allow the possibility of having the controls change depending on the actions happening in the game, though at the moment this hasn't been added in.
 The code is based on [AnimatedSwine37's](https://github.com/AnimatedSwine37/) [Persona 4 Golden Tiny Additions](https://github.com/AnimatedSwine37/p4gpc.tinyadditions).
