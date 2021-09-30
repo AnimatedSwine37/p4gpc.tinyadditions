@@ -41,10 +41,6 @@ namespace p4gpc.tinyadditions
         private Utils _utils;
 
         public Config _config { get; set; }
-
-        private static string login_name = "rirurinlive";
-        private static string token = "oauth:yaay8grqzair4wxn6t9n6aeqhj91bx";
-        private static List<string> channels_to_join = new List<string>(new string[] { "rirurinlive" });
         public Twitch (IReloadedHooks hooks, Utils utils, Config configuration, string modDirectory)
         {
             // init private variables
@@ -80,12 +76,22 @@ namespace p4gpc.tinyadditions
                         $"mov edi, {botRes}",
                     };
                 _twitchHook = hooks.CreateAsmHook(twitchControl, _baseAddress + 0x27076A9C, AsmHookBehaviour.ExecuteFirst).Activate();
+                // Scanning for instruction to write to cbt
+                // Fetch instruction that the jump command refers to
+                _memory.SafeRead((IntPtr)(_baseAddress + 0x27076A9C + 2), out uint addressScan);
+                _utils.Log($"{addressScan}");
+                string addressScanHex = Convert.ToString(addressScan, toBase: 16);
+                _utils.Log($"{addressScanHex}");
+                _memory.SafeRead((IntPtr)addressScan, out int addressScan1);
+                _utils.Log($"{addressScan1}");
+                string addressScanHex1 = Convert.ToString(addressScan1, toBase: 16);
+                _utils.Log($"{addressScanHex1}");
+                _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addressScan2); // This is the instruction that we will control using the power of Twitch
+
                 // Run this script for the entire time P4G is open
                 _timer = new System.Threading.Timer(OnTick, null, 0, 20);
                 void OnTick(object state)
                 {
-                    _memory.SafeRead((IntPtr)0x57BF01F6, out int addres);
-                    _utils.Log($"{Convert.ToString(addres, toBase: 16)}");
                     TwitchChat chatBot = chatBots[0];
                     if (!chatBot.Client.Connected)
                     {
@@ -120,19 +126,19 @@ namespace p4gpc.tinyadditions
                                 for (int j = 0; j < twitchControl.Length; j++)
                                 {
                                     _utils.LogDebug(twitchControl[j]);
-                                        
+
                                 }
-                                _memory.SafeRead((IntPtr)0x57BF01F6, out int addresses);
+                                _twitchHook.Enable();
+                                _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
                                 _utils.Log($"{Convert.ToString(addresses, toBase: 16)}");
                                 botResAsString = Convert.ToString(botRes, toBase: 16);
                                 finalResultHex = $"{botResAsString}BF";
                                 actuallyControlTheGameChat = int.Parse(finalResultHex, System.Globalization.NumberStyles.HexNumber);
-                                _memory.SafeWrite((IntPtr)0x57BF01F6, actuallyControlTheGameChat);
-                                _twitchHook.Enable();
+                                _memory.SafeWrite((IntPtr)(addressScan1 - 42), actuallyControlTheGameChat);
                             } else
                             {
                                 _twitchHook.Disable(); // turn off your keyboard lmao
-                                _memory.SafeRead((IntPtr)0x57BF01F6, out int addresses);
+                                _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
                                 _utils.Log($"{Convert.ToString(addresses, toBase: 16)}");
                             }
                         }

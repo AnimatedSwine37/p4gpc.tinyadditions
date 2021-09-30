@@ -10,7 +10,7 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <OutputPath>Path/To/Your/Reloaded-II/Mods/Folder</OutputPath>
+    <OutputPath>C:\Users\Bryce\Rirurin\p4g-cbt\tools\Reloaded\Mods\p4gpc.onemorething\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
