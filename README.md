@@ -1,5 +1,5 @@
 # p4gpc.twitchplays
-A Reloaded-II Mod for Persona 4 Golden on PC that allows you or anyone else to control the game by typing into a Twitch chat. As this control is built into the game through the power of *assembly hooks and stuff*, this mod will allow the possibility of having the controls change depending on the actions happening in the game, though at the moment this hasn't been added in.
+A [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II) Mod for Persona 4 Golden on PC that allows you or anyone else to control the game by typing into a Twitch chat. As this control is built into the game through the power of *assembly hooks and stuff*, this mod will allow the possibility of having the controls change depending on the actions happening in the game, though at the moment this hasn't been added in.
 The code is based on [AnimatedSwine37's](https://github.com/AnimatedSwine37/) [Persona 4 Golden Tiny Additions](https://github.com/AnimatedSwine37/p4gpc.tinyadditions).
 
 ## Current features
@@ -9,7 +9,7 @@ The code is based on [AnimatedSwine37's](https://github.com/AnimatedSwine37/) [P
 
 ## Build Instructions
 
-This project is built from Visual Studio 2019. Open the project in Visual Studio and change the output path to the location of your Reloaded-II mods folder before building the mod.
+This project is built from Visual Studio 2019. Open the project in Visual Studio and change the output path to the location of your Reloaded-II mods folder before building the mod (the option for this is located in the program *p4gpc.tinyadditions*, which all the .cs files will be inside of). For more detailed information on installing the mod, refer to the [Reloaded-II Quick Start Guide](https://github.com/Reloaded-Project/Reloaded-II/blob/master/docs/QuickStart.md) and the [Guide to Modding Persona 4 Golden](https://gamebanana.com/tuts/13379).
 
 ## The plan
 
