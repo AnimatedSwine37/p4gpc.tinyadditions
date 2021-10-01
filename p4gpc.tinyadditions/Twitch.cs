@@ -12,10 +12,13 @@ using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.X86;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
+using System.Threading;
+using System.Globalization;
+using static p4gpc.tinyadditions.Utils;
 
 namespace p4gpc.tinyadditions
 {
-    class Twitch
+    public class Twitch
     {
         // <summary>
         // login_name is the username that the bot will use to read messages
@@ -37,9 +40,10 @@ namespace p4gpc.tinyadditions
         private IMemory _memory = new Memory();
         // Set a base address - this should usually be 0x4000000
         private int _baseAddress;
-        // Mod configuration        
+        // Utilities (input enum is stored there)      
         private Utils _utils;
 
+        // Stuff related to Config files
         public Config _config { get; set; }
         public Twitch (IReloadedHooks hooks, Utils utils, Config configuration, string modDirectory)
         {
@@ -89,57 +93,114 @@ namespace p4gpc.tinyadditions
                 _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addressScan2); // This is the instruction that we will control using the power of Twitch
 
                 // Run this script for the entire time P4G is open
-                _timer = new System.Threading.Timer(OnTick, null, 0, 20);
-                void OnTick(object state)
+                var _nohold = new Thread(NoHoldKey);
+                var _tick = new Thread(RunOnTick);
+                _tick.Start();
+                _nohold.Start();
+                void RunOnTick()
                 {
-                    TwitchChat chatBot = chatBots[0];
-                    if (!chatBot.Client.Connected)
+                    var stopwatch = Stopwatch.StartNew();
+                    while (true)
                     {
-                        // disconnected, try to reconnect
-                        chatBot.Connect();
-                    }
-                    else
-                    {
-                        // bot is connected, read message
-                        string message = chatBot.ReadMessage();
-                        string botResAsString = "";
-                        string finalResultHex = "";
-                        int actuallyControlTheGameChat = 0;
-                        if (message != "" && message != null)
+                        _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
+                        TwitchChat chatBot = chatBots[0];
+                        if (!chatBot.Client.Connected)
                         {
-                            // send message to console
-                            _utils.Log(message);
-                            // trim message to just the chat
-                            string messageTrimmed = trimMessage(message);
-                            _utils.Log(messageTrimmed);
-                            botRes = chatBot.PlayP4GPoggies(messageTrimmed);
-                            _utils.Log($"{botRes}");
-                            if (botRes != 0)
+                            // disconnected, try to reconnect
+                            chatBot.Connect();
+                        }
+                        else
+                        {
+                            // bot is connected, read message
+                            string message = chatBot.ReadMessage();
+                            string botResAsString = "";
+                            string finalResultHex = "";
+                            int actuallyControlTheGameChat = 0;
+                            if (message != "" && message != null)
                             {
-                                string[] twitchControl =
+                                // send message to console
+                                _utils.LogDebug(message);
+                                // trim message to just the chat
+                                string messageTrimmed = trimMessage(message);
+                                _utils.LogDebug(messageTrimmed);
+                                _utils.Log($"{DateTime.Now}: {messageTrimmed}");
+                                // interpret user message
+                                botRes = chatBot.PlayP4GPoggies(messageTrimmed);
+                                if (botRes != 0)
                                 {
+                                    _utils.Log($"Input {messageTrimmed} read as {(Input)botRes}");
+                                } else
+                                {
+                                    _utils.Log($"Input {messageTrimmed} has no input");
+                                }
+                                _utils.LogDebug($"{botRes}");
+                                // Write the user's input into memory
+                                if (botRes != 0)
+                                {
+                                    string[] twitchControl =
+                                    {
                                     $"use32",
                                     $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
                                     $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                                     $"mov edi, {botRes}",
                                 };
-                                for (int j = 0; j < twitchControl.Length; j++)
-                                {
-                                    _utils.LogDebug(twitchControl[j]);
+                                    for (int j = 0; j < twitchControl.Length; j++)
+                                    {
+                                        _utils.LogDebug(twitchControl[j]);
 
+                                    }
+                                    _twitchHook.Enable(); // This prevents the host from controlling the game directly
+                                    _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
+                                    _utils.LogDebug($"{Convert.ToString(addresses, toBase: 16)}");
+                                    botResAsString = Convert.ToString(botRes, toBase: 16);
+                                    finalResultHex = $"{botResAsString}BF";
+                                    actuallyControlTheGameChat = int.Parse(finalResultHex, NumberStyles.HexNumber);
+                                    _memory.SafeWrite((IntPtr)(addressScan1 - 42), actuallyControlTheGameChat);
+
+                                    // Read address of memory that detects what part of the in game menu you are in
+                                    _memory.SafeRead((IntPtr)(_baseAddress + 0x9C65C0), out int inmenusection);
+                                    if (inmenusection == 29)
+                                    {
+                                        // no.
+                                        chatBot.SendMessage("Yeah, no. You're not allowed here chat smh");
+                                        _twitchHook.Disable();
+                                    }
                                 }
-                                _twitchHook.Enable();
-                                _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
-                                _utils.Log($"{Convert.ToString(addresses, toBase: 16)}");
-                                botResAsString = Convert.ToString(botRes, toBase: 16);
-                                finalResultHex = $"{botResAsString}BF";
-                                actuallyControlTheGameChat = int.Parse(finalResultHex, System.Globalization.NumberStyles.HexNumber);
-                                _memory.SafeWrite((IntPtr)(addressScan1 - 42), actuallyControlTheGameChat);
-                            } else
+                                else
+                                {
+                                    _twitchHook.Disable(); // If the input is invalid, reenable the host's keyboard (I promise there will be a better way to deal with this)
+                                    _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
+                                    _utils.LogDebug($"{Convert.ToString(addresses, toBase: 16)}");
+                                }
+                            }
+                        }
+                        _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
+                        Thread.Sleep(50);
+                    }
+                }
+                void NoHoldKey()
+                {
+                    var stopwatch = Stopwatch.StartNew();
+                    while (true)
+                    {
+                        if (botRes != 0)
+                        {
+                            _utils.LogDebug($"Holding key {botRes} for 500 milliseconds");
+                            _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
+                            Thread.Sleep(50);
+                            // Read address of memory that contains the in game menu
+                            _memory.SafeRead((IntPtr)(_baseAddress + 0x9C65D8), out int inmenu);
+                            // Read address of memory to detect if you are interacting with something/using that side menu
+                            _memory.SafeRead((IntPtr)(_baseAddress + 0x4A1CE08), out int menutalk);
+                            // Read address of memory to find your ingame location
+                            _memory.SafeRead((IntPtr)(_baseAddress + 0x6FA558), out int location);
+
+                            if (inmenu == 1 || menutalk == 1 || location == 0 || location == 1)
                             {
-                                _twitchHook.Disable(); // turn off your keyboard lmao
-                                _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
-                                _utils.Log($"{Convert.ToString(addresses, toBase: 16)}");
+                                int hex = int.Parse("BF", NumberStyles.HexNumber);
+                                _memory.SafeWrite((IntPtr)(addressScan1 - 42), hex);
+                                _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
+                                botRes = 0;
                             }
                         }
                     }
@@ -171,12 +232,7 @@ namespace p4gpc.tinyadditions
             }
             return -1;
         }
-        private void ChatdidanInput (int edi)
-        {
-            _memory.SafeRead((IntPtr)edi, out byte addressStuff);
-            _utils.Log($"{addressStuff}");
-            // _memory.SafeWrite(edi, (IntPtr)10);
-        }
+
         [Function(Register.edi, Register.edi, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void ChatInput(int input);
