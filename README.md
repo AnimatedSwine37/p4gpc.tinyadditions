@@ -17,6 +17,6 @@ This project is built from Visual Studio 2019. Open the project in Visual Studio
 
 ## The plan
 
-- Allow for a button to be pressed just once. At the moment, when a command is sent from chat, it acts as if the button is being held down
+- ~~Allow for a button to be pressed just once. At the moment, when a command is sent from chat, it acts as if the button is being held down~~ That's done lets go
 - Change the commands available to chat depending on the field (e.g In combat, chat can type in Attack, Skill etc. to control battles)
-- Lock the stream from controlling parts of the game so that they don't delete your save files or something dumb like that
+- ~~Lock the stream from controlling parts of the game so that they don't delete your save files or something dumb like that~~ At least partially done, will need more testing to confirm
