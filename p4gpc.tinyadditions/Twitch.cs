@@ -83,13 +83,13 @@ namespace p4gpc.tinyadditions
                 // Scanning for instruction to write to cbt
                 // Fetch instruction that the jump command refers to
                 _memory.SafeRead((IntPtr)(_baseAddress + 0x27076A9C + 2), out uint addressScan);
-                _utils.Log($"{addressScan}");
+                _utils.LogDebug($"{addressScan}");
                 string addressScanHex = Convert.ToString(addressScan, toBase: 16);
-                _utils.Log($"{addressScanHex}");
+                _utils.LogDebug($"{addressScanHex}");
                 _memory.SafeRead((IntPtr)addressScan, out int addressScan1);
-                _utils.Log($"{addressScan1}");
+                _utils.LogDebug($"{addressScan1}");
                 string addressScanHex1 = Convert.ToString(addressScan1, toBase: 16);
-                _utils.Log($"{addressScanHex1}");
+                _utils.LogDebug($"{addressScanHex1}");
                 _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addressScan2); // This is the instruction that we will control using the power of Twitch
 
                 // Run this script for the entire time P4G is open
@@ -123,7 +123,11 @@ namespace p4gpc.tinyadditions
                                 // trim message to just the chat
                                 string messageTrimmed = trimMessage(message);
                                 _utils.LogDebug(messageTrimmed);
-                                _utils.Log($"{DateTime.Now}: {messageTrimmed}");
+                                // get username of the user who posted
+                                string usernamePoster = getUsername(message);
+                                _utils.Log($"{DateTime.Now}: {usernamePoster} posted {messageTrimmed}");
+
+
                                 // interpret user message
                                 botRes = chatBot.PlayP4GPoggies(messageTrimmed);
                                 if (botRes != 0)
@@ -159,10 +163,12 @@ namespace p4gpc.tinyadditions
 
                                     // Read address of memory that detects what part of the in game menu you are in
                                     _memory.SafeRead((IntPtr)(_baseAddress + 0x9C65C0), out int inmenusection);
-                                    if (inmenusection == 29)
+                                    // Read address of memory to find your ingame location
+                                    _memory.SafeRead((IntPtr)(_baseAddress + 0x6FA558), out int location);
+                                    if (inmenusection == 29 || location == 0)
                                     {
                                         // no.
-                                        chatBot.SendMessage("Yeah, no. You're not allowed here chat smh");
+                                        chatBot.SendMessage($"Nice try {usernamePoster} lol");
                                         _twitchHook.Disable();
                                     }
                                 }
@@ -215,6 +221,20 @@ namespace p4gpc.tinyadditions
             int indexOfSecondColon = getNthIndex(message, ':', 2);
             var result = message.Substring(indexOfSecondColon + 1);
             return result;
+        }
+        public string getUsername(string message)
+        {
+            try
+            {
+                int indexofHash = getNthIndex(message, '#', 1);
+                int indexOfSecondColon = getNthIndex(message, ':', 2);
+                var result = message.Substring((indexofHash + 1), (indexOfSecondColon - indexofHash - 2));
+                return result;
+            } catch (Exception e)
+            {
+                _utils.LogError($"Unable to get username from message", e);
+                return message;
+            }
         }
         public static int getNthIndex(string s, char t, int n)
         {
