@@ -2,7 +2,7 @@
   "ModId": "p4gpc.twitchplays",
   "ModName": "[WIP] Twitch Plays Persona 4 Golden",
   "ModAuthor": "Rirurin",
-  "ModVersion": "0.1.1",
+  "ModVersion": "0.2.0",
   "ModDescription": "Let Twitch Chat play the game for you. Built from AnimatedSwine37's 'Persona 4 Golden Tiny Additions'.",
   "ModDll": "p4gpc.tinyadditions.dll",
   "ModIcon": "Preview.png",
