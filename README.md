@@ -11,6 +11,8 @@ The code is based on [AnimatedSwine37's](https://github.com/AnimatedSwine37/) [P
 - Control the game by typing select, start, up, down, left, right, square, cross/X, circle/O and triangle (equivalent to playing with a keyboard or a controller)
 - Set the channel to act as a bot and the channel that the bot reads messages from in the Config panel
 
+The link to generate an OAuth token connected to the Twitch account that will read the messages can be found [here](https://twitchapps.com/tmi/).
+
 ## Build Instructions
 
 This project is built from Visual Studio 2019. Open the project in Visual Studio and change the output path to the location of your Reloaded-II mods folder before building the mod (the option for this is located in the program *p4gpc.tinyadditions*, which all the .cs files will be inside of). For more detailed information on installing the mod, refer to the [Reloaded-II Quick Start Guide](https://github.com/Reloaded-Project/Reloaded-II/blob/master/docs/QuickStart.md) and the [Guide to Modding Persona 4 Golden](https://gamebanana.com/tuts/13379).
