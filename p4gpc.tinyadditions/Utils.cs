@@ -31,6 +31,17 @@ namespace p4gpc.tinyadditions
             Cross = 0x4000,
             Square = 0x8000
         };
+        public enum BattleMenu
+        {
+            Analysis = 1,
+            Tactics = 2,
+            Guard = 3,
+            Attack = 4,
+            Skill = 5,
+            Persona = 6,
+            Item = 7,
+            Escape = 8
+        };
 
         public void LogDebug(string message)
         {

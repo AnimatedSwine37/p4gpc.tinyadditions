@@ -53,5 +53,9 @@ namespace p4gpc.tinyadditions.Configuration
         [Description("The Twitch channel that the bot will read messages from")]
         public string ChannelConnection { get; set; }
 
+        [DisplayName("Tick Speed (Advanced)")]
+        [Description("Number of milliseconds between each tick")]
+        public int TickSpeed { get; set; } = 75;
+
     }
 }

@@ -32,7 +32,11 @@ namespace p4gpc.tinyadditions
 
         private IReloadedHooks _hooks;
         private IReverseWrapper<ChatInput> _chatReverseWrapper;
+        private IReverseWrapper<BattleInput> _battleReverseWrapper;
+        private IReverseWrapper<BattleMenuSelection> _battleMenuReverseWrapper;
         private IAsmHook _twitchHook;
+        private IAsmHook _battleHook;
+        private IAsmHook _battleMenuHook;
 
 
         private System.Threading.Timer _timer;
@@ -45,6 +49,19 @@ namespace p4gpc.tinyadditions
 
         // Stuff related to Config files
         public Config _config { get; set; }
+
+        // inputs
+        public int botRes = 0;
+
+        // battle inputs
+        public int battleRes = 0;
+        List<int> battleAction = new List<int>();
+        public int highlightedAction = 0;
+
+        // frame
+        public int frame = 0;
+        public int tickAmount = 50;
+
         public Twitch (IReloadedHooks hooks, Utils utils, Config configuration, string modDirectory)
         {
             // init private variables
@@ -57,12 +74,13 @@ namespace p4gpc.tinyadditions
             _baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
             _modDirectory = modDirectory;
 
-            int botRes = 0;
+            tickAmount = configuration.TickSpeed;
 
             try
             {
                 // Start up twitch bot
                 // Create a list of TwitchChat objects for each channel
+
                 List<TwitchChat> chatBots = new List<TwitchChat>();
                 // add channels to the list
                 chatBots.Add(new TwitchChat(configuration.TwitchUsername, configuration.OAuthToken, configuration.ChannelConnection));
@@ -72,16 +90,34 @@ namespace p4gpc.tinyadditions
                 Pinger pinger = new Pinger(chatBot);
                 pinger.Start();
                 // Assembly code that injects into the routine to control the game
+
                 string[] twitchControl =
-                    {
-                        $"use32",
-                        $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                        $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
-                        $"mov edi, {botRes}",
-                    };
+                {
+                    $"use32",
+                    $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                    $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                    $"mov edi, {botRes}",
+                };
                 _twitchHook = hooks.CreateAsmHook(twitchControl, _baseAddress + 0x27076A9C, AsmHookBehaviour.ExecuteFirst).Activate();
+                string[] battleControl =
+                {
+                    $"use32",
+                    $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                    $"{hooks.Utilities.GetAbsoluteCallMnemonics(AnalysisOrAttackInputHappened, out _battleReverseWrapper)}",
+                    $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                };
+                string[] battleMenuControl =
+                {
+                    $"use32",
+                    $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                    $"{hooks.Utilities.GetAbsoluteCallMnemonics(MenuHighlighted, out _battleMenuReverseWrapper)}",
+                    $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                };
+                // _battleHook = hooks.CreateAsmHook(battleControl, _baseAddress + 0x21BC4E30, AsmHookBehaviour.ExecuteAfter).Activate();
+                _battleMenuHook = hooks.CreateAsmHook(battleMenuControl, _baseAddress + 0x225F190A, AsmHookBehaviour.ExecuteFirst).Activate();
                 // Scanning for instruction to write to cbt
                 // Fetch instruction that the jump command refers to
+
                 _memory.SafeRead((IntPtr)(_baseAddress + 0x27076A9C + 2), out uint addressScan);
                 _utils.LogDebug($"{addressScan}");
                 string addressScanHex = Convert.ToString(addressScan, toBase: 16);
@@ -93,6 +129,7 @@ namespace p4gpc.tinyadditions
                 _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addressScan2); // This is the instruction that we will control using the power of Twitch
 
                 // Run this script for the entire time P4G is open
+
                 var _nohold = new Thread(NoHoldKey);
                 var _tick = new Thread(RunOnTick);
                 _tick.Start();
@@ -114,7 +151,6 @@ namespace p4gpc.tinyadditions
                             // bot is connected, read message
                             string message = chatBot.ReadMessage();
                             string botResAsString = "";
-                            string finalResultHex = "";
                             int actuallyControlTheGameChat = 0;
                             if (message != "" && message != null)
                             {
@@ -127,39 +163,41 @@ namespace p4gpc.tinyadditions
                                 string usernamePoster = getUsername(message);
                                 _utils.Log($"{DateTime.Now}: {usernamePoster} posted {messageTrimmed}");
 
-
+                                // Read address of memory that states if you are in a battle
+                                _memory.SafeRead((IntPtr)(_baseAddress + 0x21A967B0), out int inbattle);
+                                if (inbattle != 0)
+                                {
+                                    // In battle, can accept other responses
+                                    battleRes = chatBot.BattleMenu(messageTrimmed);
+                                    
+                                }
                                 // interpret user message
                                 botRes = chatBot.PlayP4GPoggies(messageTrimmed);
-                                if (botRes != 0)
-                                {
-                                    _utils.Log($"Input {messageTrimmed} read as {(Input)botRes}");
-                                } else
-                                {
-                                    _utils.Log($"Input {messageTrimmed} has no input");
-                                }
-                                _utils.LogDebug($"{botRes}");
+
+                                _utils.LogDebug($"Main control - {botRes}");
+                                _utils.LogDebug($"Battle control - {battleRes}");
                                 // Write the user's input into memory
-                                if (botRes != 0)
+                                if (botRes != 0 || battleRes != 0)
                                 {
+                                    frame = 0;
+                                    if (botRes != 0) _utils.Log($"Input {messageTrimmed} read as {(Input)botRes}");
+                                    if (battleRes != 0) _utils.Log($"Input {messageTrimmed} read as {(BattleMenu)battleRes}");
                                     string[] twitchControl =
                                     {
                                     $"use32",
                                     $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
                                     $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                                     $"mov edi, {botRes}",
-                                };
-                                    for (int j = 0; j < twitchControl.Length; j++)
-                                    {
-                                        _utils.LogDebug(twitchControl[j]);
-
-                                    }
+                                    };
                                     _twitchHook.Enable(); // This prevents the host from controlling the game directly
                                     _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
                                     _utils.LogDebug($"{Convert.ToString(addresses, toBase: 16)}");
-                                    botResAsString = Convert.ToString(botRes, toBase: 16);
-                                    finalResultHex = $"{botResAsString}BF";
-                                    actuallyControlTheGameChat = int.Parse(finalResultHex, NumberStyles.HexNumber);
-                                    _memory.SafeWrite((IntPtr)(addressScan1 - 42), actuallyControlTheGameChat);
+                                    if (botRes != 0)
+                                    {
+                                        botResAsString = Convert.ToString(botRes, toBase: 16);
+                                        actuallyControlTheGameChat = int.Parse($"{botResAsString}BF", NumberStyles.HexNumber);
+                                        _memory.SafeWrite((IntPtr)(addressScan1 - 42), actuallyControlTheGameChat);
+                                    }
 
                                     // Read address of memory that detects what part of the in game menu you are in
                                     _memory.SafeRead((IntPtr)(_baseAddress + 0x9C65C0), out int inmenusection);
@@ -174,6 +212,8 @@ namespace p4gpc.tinyadditions
                                 }
                                 else
                                 {
+                                    _utils.Log($"Input {messageTrimmed} has no input");
+                                    _utils.Log($"Input {messageTrimmed} read as {(BattleMenu)battleRes}");
                                     _twitchHook.Disable(); // If the input is invalid, reenable the host's keyboard (I promise there will be a better way to deal with this)
                                     _memory.SafeRead((IntPtr)(addressScan1 - 42), out int addresses);
                                     _utils.LogDebug($"{Convert.ToString(addresses, toBase: 16)}");
@@ -181,7 +221,7 @@ namespace p4gpc.tinyadditions
                             }
                         }
                         _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
-                        Thread.Sleep(50);
+                        Thread.Sleep(tickAmount);
                     }
                 }
                 void NoHoldKey()
@@ -189,29 +229,92 @@ namespace p4gpc.tinyadditions
                     var stopwatch = Stopwatch.StartNew();
                     while (true)
                     {
-                        if (botRes != 0)
+                        if (botRes != 0 || battleRes != 0)
                         {
-                            _utils.LogDebug($"Holding key {botRes} for 500 milliseconds");
+                            _utils.LogDebug($"{frame}");
+                            _utils.LogDebug($"Holding key {(Input)botRes} for {tickAmount} milliseconds");
                             _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
-                            Thread.Sleep(50);
+
+                            Thread.Sleep(tickAmount);
+
                             // Read address of memory that contains the in game menu
                             _memory.SafeRead((IntPtr)(_baseAddress + 0x9C65D8), out int inmenu);
                             // Read address of memory to detect if you are interacting with something/using that side menu
                             _memory.SafeRead((IntPtr)(_baseAddress + 0x4A1CE08), out int menutalk);
                             // Read address of memory to find your ingame location
                             _memory.SafeRead((IntPtr)(_baseAddress + 0x6FA558), out int location);
-
-                            if (inmenu == 1 || menutalk == 1 || location == 0 || location == 1)
+                            // Read address of memory that states if you are in a battle
+                            _memory.SafeRead((IntPtr)(_baseAddress + 0x21A967B0), out int inbattle);
+                            if (battleRes == 0)
                             {
-                                int hex = int.Parse("BF", NumberStyles.HexNumber);
-                                _memory.SafeWrite((IntPtr)(addressScan1 - 42), hex);
-                                _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
-                                botRes = 0;
+                                if (inmenu == 1 || menutalk == 1 || location == 0 || location == 1 || inbattle != 0)
+                                {
+                                    int hex = int.Parse("BF", NumberStyles.HexNumber);
+                                    _memory.SafeWrite((IntPtr)(addressScan1 - 42), hex);
+                                    _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
+                                    botRes = 0;
+                                }
                             }
+                            if (inbattle != 0 && battleRes != 0)
+                            {
+                                if (frame == 0)
+                                {
+                                    // Initialise list to reference for keyboard combination
+                                    _utils.LogDebug($"Highlighted action - {highlightedAction}");
+                                    int filteredHighlightedAction = highlightedAction;
+                                    if (filteredHighlightedAction > 8) filteredHighlightedAction = 6; // Persona is read by the address as some really high value
+                                    _utils.LogDebug($"Function from - {filteredHighlightedAction}");
+                                    _utils.LogDebug($"Function to - {battleRes}");
+                                    int battleSelectionDifference = filteredHighlightedAction - battleRes;
+                                    _utils.LogDebug($"Selection Difference - {battleSelectionDifference}");
+                                    bool bsdPositive = battleSelectionDifference > 0;
+                                    if (battleSelectionDifference != 0)
+                                    {
+                                        if (bsdPositive)
+                                        {
+                                            for (int i = 0; i < Math.Abs(battleSelectionDifference); i++)
+                                            {
+                                                battleAction.Add(16);
+                                                battleAction.Add(0);
+                                            }
+                                        } else
+                                        {
+                                            for (int i = 0; i < Math.Abs(battleSelectionDifference); i++)
+                                            {
+                                                battleAction.Add(64);
+                                                battleAction.Add(0);
+                                            }
+                                        }
+                                    }
+                                    battleAction.Add(8192);
+                                }
+                                if (frame == battleAction.Count)
+                                {
+                                    int hex = int.Parse("BF", NumberStyles.HexNumber);
+                                    _memory.SafeWrite((IntPtr)(addressScan1 - 42), hex);
+                                    _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
+                                    botRes = 0;
+                                    battleRes = 0;
+                                    frame = 0;
+                                    battleAction.Clear();
+                                }
+                                else
+                                {
+                                    string battleResAsString = Convert.ToString(battleAction[frame], toBase: 16);
+                                    int hex = int.Parse($"{battleResAsString}BF", NumberStyles.HexNumber);
+                                    _memory.SafeWrite((IntPtr)(addressScan1 - 42), hex);
+                                    _utils.LogDebug($"Thread {Thread.CurrentThread.ManagedThreadId}: {stopwatch.ElapsedMilliseconds / 1000.0} seconds | {stopwatch.ElapsedTicks} ticks");
+                                    botRes = battleAction[frame];
+                                }
+
+                            }
+
+                            frame += 1;
                         }
                     }
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 _utils.LogError($"Error connecting to Twitch", e);
             }
@@ -253,8 +356,27 @@ namespace p4gpc.tinyadditions
             return -1;
         }
 
+        private void AnalysisOrAttackInputHappened (int input)
+        {
+            _utils.Log($"Input was {input}");
+        }
+
+        private void MenuHighlighted(int input)
+        {
+            // _utils.Log($"Menu selection is {input}");
+            highlightedAction = input + 1;
+        }
+
         [Function(Register.edi, Register.edi, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void ChatInput(int input);
+
+        [Function(Register.ebx, Register.ebx, StackCleanup.Callee)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void BattleInput(int input);
+
+        [Function(Register.eax, Register.eax, StackCleanup.Callee)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void BattleMenuSelection(int input);
     }
 }
