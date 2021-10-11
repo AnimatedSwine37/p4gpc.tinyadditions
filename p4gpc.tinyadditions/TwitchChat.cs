@@ -113,5 +113,40 @@ namespace p4gpc.tinyadditions
             }
             return res;
         }
+        public int BattleMenu(string text)
+        {
+            int res;
+            switch (text)
+            {
+                case string inputText when (string.Equals(inputText, "Analysis", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 1;
+                    break;
+                case string inputText when (string.Equals(inputText, "Tactics", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 2;
+                    break;
+                case string inputText when (string.Equals(inputText, "Guard", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 3;
+                    break;
+                case string inputText when (string.Equals(inputText, "Attack", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 4;
+                    break;
+                case string inputText when (string.Equals(inputText, "Skill", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 5;
+                    break;
+                case string inputText when (string.Equals(inputText, "Persona", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 6;
+                    break;
+                case string inputText when (string.Equals(inputText, "Item", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 7;
+                    break;
+                case string inputText when (string.Equals(inputText, "Escape", StringComparison.CurrentCultureIgnoreCase)):
+                    res = 8;
+                    break;
+                default:
+                    res = 0;
+                    break;
+            }
+            return res;
+        }
     }
 }
