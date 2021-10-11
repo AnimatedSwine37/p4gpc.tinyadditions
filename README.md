@@ -8,7 +8,7 @@ The code is based on [AnimatedSwine37's](https://github.com/AnimatedSwine37/) [P
 
 ## Current features
 
-- Control the game by typing select, start, up, down, left, right, square, cross/X, circle/O and triangle (equivalent to playing with a keyboard or a controller)
+- Control the game by typing select, start, up, down, left, right, square, cross/X, circle/O and triangle (equivalent to playing with a keyboard or a controller) or by typing the name of the action you want to do in the battle menu (Analysis, Tactics, Guard etc.)
 - Set the channel to act as a bot and the channel that the bot reads messages from in the Config panel
 
 The link to generate an OAuth token connected to the Twitch account that will read the messages can be found [here](https://twitchapps.com/tmi/).
@@ -19,6 +19,5 @@ This project is built from Visual Studio 2019. Open the project in Visual Studio
 
 ## The plan
 
-- ~~Allow for a button to be pressed just once. At the moment, when a command is sent from chat, it acts as if the button is being held down~~ That's done lets go
-- Change the commands available to chat depending on the field (e.g In combat, chat can type in Attack, Skill etc. to control battles)
+~~- Change the commands available to chat depending on the field (e.g In combat, chat can type in Attack, Skill etc. to control battles)~~ Implemented in some form through executing a set of inputs
 - ~~Lock the stream from controlling parts of the game so that they don't delete your save files or something dumb like that~~ At least partially done, will need more testing to confirm
