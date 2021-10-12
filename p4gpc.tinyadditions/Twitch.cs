@@ -268,25 +268,35 @@ namespace p4gpc.tinyadditions
                                     int battleSelectionDifference = filteredHighlightedAction - battleRes;
                                     _utils.LogDebug($"Selection Difference - {battleSelectionDifference}");
                                     bool bsdPositive = battleSelectionDifference > 0;
-                                    if (battleSelectionDifference != 0)
+                                    if (battleRes == 1)
                                     {
-                                        if (bsdPositive)
+                                        battleAction.Add(1024);
+                                    } else if (battleRes == 6)
+                                    {
+                                        battleAction.Add(32768);
+                                    } else
+                                    {
+                                        if (battleSelectionDifference != 0)
                                         {
-                                            for (int i = 0; i < Math.Abs(battleSelectionDifference); i++)
+                                            if (bsdPositive)
                                             {
-                                                battleAction.Add(16);
-                                                battleAction.Add(0);
+                                                for (int i = 0; i < Math.Abs(battleSelectionDifference); i++)
+                                                {
+                                                    battleAction.Add(16);
+                                                    battleAction.Add(0);
+                                                }
                                             }
-                                        } else
-                                        {
-                                            for (int i = 0; i < Math.Abs(battleSelectionDifference); i++)
+                                            else
                                             {
-                                                battleAction.Add(64);
-                                                battleAction.Add(0);
+                                                for (int i = 0; i < Math.Abs(battleSelectionDifference); i++)
+                                                {
+                                                    battleAction.Add(64);
+                                                    battleAction.Add(0);
+                                                }
                                             }
                                         }
+                                        battleAction.Add(8192);
                                     }
-                                    battleAction.Add(8192);
                                 }
                                 if (frame == battleAction.Count)
                                 {
