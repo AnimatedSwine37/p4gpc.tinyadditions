@@ -2,11 +2,13 @@
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.X86;
+using Reloaded.Memory.Sigscan;
 using Reloaded.Memory.Sources;
 using Reloaded.Mod.Interfaces;
 using System;
 using System.Runtime.InteropServices;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
+using System.Diagnostics;
 
 namespace p4gpc.tinyadditions
 {
@@ -56,7 +58,12 @@ namespace p4gpc.tinyadditions
                 };
 
                 // Create function hook
-                _speedChangeHook = _hooks.CreateAsmHook(function, _baseAddress + 0x23F4AD1F, AsmHookBehaviour.ExecuteAfter).Activate();
+                using var thisProcess = Process.GetCurrentProcess();
+                _baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
+                using var scanner = new Scanner(thisProcess, thisProcess.MainModule);
+                int speedChangeAddress;
+                speedChangeAddress = scanner.CompiledFindPattern("51 BA 70 01 00 00 A3").Offset + _baseAddress - 31;
+                _speedChangeHook = _hooks.CreateAsmHook(function, speedChangeAddress, AsmHookBehaviour.ExecuteAfter).Activate(); // 51 BA 70 01 00 00 A3
             }
             catch (Exception e)
             {
@@ -88,8 +95,8 @@ namespace p4gpc.tinyadditions
                 else
                 {
                     // Turn sprint on
-                    // _utils.LogDebug($"Sprint on. New speed is {currentSpeed * Configuration.SprintSpeed}");
-                    // _memory.SafeWrite(_speedLocation, (currentSpeed * Configuration.SprintSpeed));
+                    _utils.LogDebug($"Sprint on. New speed is {currentSpeed * Configuration.SprintSpeed}");
+                    _memory.SafeWrite(_speedLocation, (currentSpeed * Configuration.SprintSpeed));
                 }
             }
             catch (Exception e)

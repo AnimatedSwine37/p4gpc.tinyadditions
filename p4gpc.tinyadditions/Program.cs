@@ -13,7 +13,7 @@ namespace p4gpc.tinyadditions
         /// <summary>
         /// Your mod if from ModConfig.json, used during initialization.
         /// </summary>
-        private const string MyModId = "p4gpc.twitchplays";
+        private const string MyModId = "p4gpc.tinyadditions";
 
         /// <summary>
         /// Used for writing text to the console window.
@@ -39,7 +39,6 @@ namespace p4gpc.tinyadditions
 
         private Inputs _inputs;
         private Utils _utils;
-        private Twitch _twitch;
 
         /// <summary>
         /// Entry point for your mod.
@@ -61,7 +60,6 @@ namespace p4gpc.tinyadditions
             /* Your mod code starts here. */
             _utils = new Utils(_configuration, _logger);
             _inputs = new Inputs(_hooks, _configuration, _utils);
-            _twitch = new Twitch(_hooks, _utils, _configuration, _modLoader.GetDirectoryForModId(MyModId));
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

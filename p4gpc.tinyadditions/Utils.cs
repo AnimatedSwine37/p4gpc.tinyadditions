@@ -31,32 +31,21 @@ namespace p4gpc.tinyadditions
             Cross = 0x4000,
             Square = 0x8000
         };
-        public enum BattleMenu
-        {
-            Analysis = 1,
-            Tactics = 2,
-            Guard = 3,
-            Attack = 4,
-            Skill = 5,
-            Persona = 6,
-            Item = 7,
-            Escape = 8
-        };
 
         public void LogDebug(string message)
         {
-            if(Configuration.DebugEnabled) 
-                _logger.WriteLine($"[TwitchPlays] {message}");
+            if (Configuration.DebugEnabled)
+                _logger.WriteLine($"[TinyAdditions] {message}");
         }
 
         public void Log(string message)
         {
-            _logger.WriteLine($"[TwitchPlays] {message}");
+            _logger.WriteLine($"[TinyAdditions] {message}");
         }
 
         public void LogError(string message, Exception e)
         {
-            _logger.WriteLine($"[TwitchPlays] {message}: {e.Message}", System.Drawing.Color.Red);
+            _logger.WriteLine($"[TinyAdditions] {message}: {e.Message}", System.Drawing.Color.Red);
         }
     }
 }

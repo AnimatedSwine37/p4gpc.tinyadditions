@@ -1,9 +1,9 @@
 {
-  "ModId": "p4gpc.twitchplays",
-  "ModName": "[WIP] Twitch Plays Persona 4 Golden",
-  "ModAuthor": "Rirurin",
-  "ModVersion": "0.3.1",
-  "ModDescription": "Let Twitch Chat play the game for you. Built from AnimatedSwine37's 'Persona 4 Golden Tiny Additions'.",
+  "ModId": "p4gpc.tinyadditions",
+  "ModName": "Persona 4 Golden Tiny Additions",
+  "ModAuthor": "AnimatedSwine37, BulbyVR, Rirurin",
+  "ModVersion": "0.1.1",
+  "ModDescription": "Adds various small additions to improve the game",
   "ModDll": "p4gpc.tinyadditions.dll",
   "ModIcon": "Preview.png",
   "ModR2RManagedDll32": "x86/p4gpc.tinyadditions.dll",
@@ -12,5 +12,5 @@
   "ModNativeDll64": "",
   "ModDependencies": [ "reloaded.sharedlib.hooks" ],
   "OptionalDependencies": null,
-  "SupportedAppId": ["p4g.exe"]
+  "SupportedAppId": [ "p4g.exe" ]
 }
