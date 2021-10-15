@@ -34,7 +34,7 @@ namespace p4gpc.tinyadditions
 
         public void LogDebug(string message)
         {
-            if(Configuration.DebugEnabled) 
+            if (Configuration.DebugEnabled)
                 _logger.WriteLine($"[TinyAdditions] {message}");
         }
 

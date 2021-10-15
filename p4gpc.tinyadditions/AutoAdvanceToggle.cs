@@ -11,9 +11,9 @@ namespace p4gpc.tinyadditions
         private IReloadedHooks _hooks;
         private IMemory _memory;
         private int _baseAddress;
-        public Config Configuration {get; set;}
+        public Config Configuration { get; set; }
 
-        public AutoAdvanceToggle(Utils util, int baseAddress, Config configuration, IMemory memory,IReloadedHooks hooks)
+        public AutoAdvanceToggle(Utils util, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks)
         {
             Configuration = configuration;
             _util = util;
@@ -22,7 +22,8 @@ namespace p4gpc.tinyadditions
             _baseAddress = baseAddress;
             _util.Log("Initizalizing auto-advance toggle");
         }
-        public void ToggleAutoAdvance() {
+        public void ToggleAutoAdvance()
+        {
             try
             {
                 _memory.SafeRead((IntPtr)(_baseAddress + 0x49DD563), out byte autoAdvance);
@@ -31,7 +32,8 @@ namespace p4gpc.tinyadditions
 
                 _memory.SafeWrite((IntPtr)(_baseAddress + 0x49DD563), ref autoAdvance);
                 _util.Log("Toggled Auto Advance");
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 _util.LogError("Couldn't Read or write address for auto advance toggle", e);
             }

@@ -11,6 +11,8 @@ using System.Text;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using Reloaded.Memory.Sources;
 using static p4gpc.tinyadditions.Utils;
+using Reloaded.Memory.Sigscan;
+using Reloaded.Memory.Sigscan.Structs;
 
 namespace p4gpc.tinyadditions
 {
@@ -75,8 +77,12 @@ namespace p4gpc.tinyadditions
             };
 
                 // Create function hooks
-                _keyboardHook = hooks.CreateAsmHook(keyboardFunction, _baseAddress + 0x262AF738, AsmHookBehaviour.ExecuteFirst).Activate();
-                _controllerHook = hooks.CreateAsmHook(controllerFunction, _baseAddress + 0x262AF780, AsmHookBehaviour.ExecuteFirst).Activate();
+                using var scanner = new Scanner(thisProcess, thisProcess.MainModule);
+                int keyboardAddress, controllerAddress;
+                keyboardAddress = scanner.CompiledFindPattern("85 DB 74 05 E8 ?? ?? ?? ?? 8B 7D F8").Offset + _baseAddress;
+                controllerAddress = scanner.CompiledFindPattern("0F AB D3 89 5D C8").Offset + _baseAddress;
+                _keyboardHook = hooks.CreateAsmHook(keyboardFunction, keyboardAddress, AsmHookBehaviour.ExecuteFirst).Activate(); // call 85 DB 74 05 E8 7F 81 13 DA
+                _controllerHook = hooks.CreateAsmHook(controllerFunction, controllerAddress, AsmHookBehaviour.ExecuteFirst).Activate();
             }
             catch (Exception e)
             {
@@ -168,7 +174,7 @@ namespace p4gpc.tinyadditions
                 foundInputs.Add((Input)inputCombo);
                 return foundInputs;
             }
-                
+
             // Get all possible inputs as an array
             var possibleInputs = Enum.GetValues(typeof(Input));
             // Reverse the array so it goes from highest input value to smallest
@@ -182,9 +188,9 @@ namespace p4gpc.tinyadditions
                 {
                     inputCombo -= possibleInput;
                     // Switch cross and circle if it is one of them as it is opposite compared to controller
-                    if (possibleInput == (int)Input.Circle) 
+                    if (possibleInput == (int)Input.Circle)
                         foundInputs.Add(Input.Cross);
-                    else if (possibleInput == (int)Input.Cross) 
+                    else if (possibleInput == (int)Input.Cross)
                         foundInputs.Add(Input.Circle);
                     else
                         foundInputs.Add((Input)possibleInput);
