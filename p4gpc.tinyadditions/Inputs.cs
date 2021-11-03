@@ -42,22 +42,20 @@ namespace p4gpc.tinyadditions
         private Config _config { get; set; }
         private Utils _utils;
 
-        public Inputs(IReloadedHooks hooks, Config configuration, Utils utils)
+        public Inputs(IReloadedHooks hooks, Config configuration, Utils utils, int baseAddress, IMemory memory)
         {
             // Initialise private variables
             _config = configuration;
             _hooks = hooks;
-            _memory = new Memory();
+            _memory = memory;
             _utils = utils;
+            _baseAddress = baseAddress;
 
             // Create input hook
             _utils.Log("Hooking into input functions");
 
             try
             {
-                using var thisProcess = Process.GetCurrentProcess();
-                _baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
-
                 // Define functions (they're the same but use different reverse wrappers)
                 string[] keyboardFunction =
                 {
@@ -79,10 +77,8 @@ namespace p4gpc.tinyadditions
             };
 
                 // Create function hooks
-                using var scanner = new Scanner(thisProcess, thisProcess.MainModule);
-                int keyboardAddress, controllerAddress;
-                keyboardAddress = scanner.CompiledFindPattern("85 DB 74 05 E8 ?? ?? ?? ?? 8B 7D F8").Offset + _baseAddress;
-                controllerAddress = scanner.CompiledFindPattern("0F AB D3 89 5D C8").Offset + _baseAddress;
+                long keyboardAddress = _utils.SigScan("85 DB 74 05 E8 ?? ?? ?? ?? 8B 7D F8", "keyboard hook");
+                long controllerAddress = _utils.SigScan("0F AB D3 89 5D C8", "controller hook");
                 _keyboardHook = hooks.CreateAsmHook(keyboardFunction, keyboardAddress, AsmHookBehaviour.ExecuteFirst).Activate(); // call 85 DB 74 05 E8 7F 81 13 DA
                 _controllerHook = hooks.CreateAsmHook(controllerFunction, controllerAddress, AsmHookBehaviour.ExecuteFirst).Activate();
             }

@@ -18,19 +18,9 @@ namespace p4gpc.tinyadditions
         public void ToggleAutoAdvance()
         {
             if (!enabled) return;
-            try
-            {
-                _memory.SafeRead((IntPtr)(_baseAddress + 0x49DD563), out byte autoAdvance);
-                // 5th bit is the flag
-                autoAdvance ^= 0b00001000;
-
-                _memory.SafeWrite((IntPtr)(_baseAddress + 0x49DD563), ref autoAdvance);
-                _utils.Log("Toggled Auto Advance");
-            }
-            catch (Exception e)
-            {
-                _utils.LogError("Couldn't Read or write address for auto advance toggle", e);
-            }
+            bool autoAdvanceFlag = _utils.CheckFlag(59);
+            _utils.ChangeFlag(59, !autoAdvanceFlag);
+            _utils.Log("Toggled Auto Advance");
         }
 
         public override void Resume()

@@ -1,6 +1,7 @@
 ﻿using p4gpc.tinyadditions.Configuration;
 using p4gpc.tinyadditions.Configuration.Implementation;
 using Reloaded.Hooks.ReloadedII.Interfaces;
+using Reloaded.Memory.Sources;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using System;
@@ -58,8 +59,11 @@ namespace p4gpc.tinyadditions
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
 
             /* Your mod code starts here. */
-            _utils = new Utils(_configuration, _logger);
-            _inputs = new Inputs(_hooks, _configuration, _utils);
+            using var thisProcess = Process.GetCurrentProcess();
+            int baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
+            IMemory memory = new Memory();
+            _utils = new Utils(_configuration, _logger, baseAddress, memory);
+            _inputs = new Inputs(_hooks, _configuration, _utils, baseAddress, memory);
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

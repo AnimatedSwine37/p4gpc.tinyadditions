@@ -20,7 +20,7 @@ namespace p4gpc.tinyadditions.Additions
         {
             _utils.Log("Initialising Easy Bug Catching");
             // Get the function address
-            long functionAddress = _utils.SigScan("F3 0F 2C C8 83 F9 F6", baseAddress, "easy bug catching");
+            long functionAddress = _utils.SigScan("F3 0F 2C C8 83 F9 F6", "easy bug catching");
             if (functionAddress == -1) return;
 
             // Create the function hook
