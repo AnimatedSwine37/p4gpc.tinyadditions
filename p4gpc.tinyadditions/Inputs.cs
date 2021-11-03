@@ -11,6 +11,7 @@ using System.Text;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using Reloaded.Memory.Sources;
 using static p4gpc.tinyadditions.Utils;
+using p4gpc.tinyadditions.Additions;
 using Reloaded.Memory.Sigscan;
 using Reloaded.Memory.Sigscan.Structs;
 
@@ -35,6 +36,7 @@ namespace p4gpc.tinyadditions
         // Functionalities
         private Sprint _sprint;
         private AutoAdvanceToggle _autoAdvanceToggle;
+        private EasyBugCatching _easyBugCatching;
 
         // Current mod configuration
         private Config _config { get; set; }
@@ -95,6 +97,7 @@ namespace p4gpc.tinyadditions
 
             _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
             _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
+            _easyBugCatching = new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks);
         }
 
         public void Suspend()
@@ -102,18 +105,24 @@ namespace p4gpc.tinyadditions
             _keyboardHook?.Disable();
             _controllerHook?.Disable();
             _sprint?.Suspend();
+            _autoAdvanceToggle?.Suspend();
+            _easyBugCatching?.Suspend();
         }
         public void Resume()
         {
             _keyboardHook?.Enable();
             _controllerHook?.Enable();
             _sprint?.Resume();
+            _autoAdvanceToggle?.Resume();
+            _easyBugCatching?.Resume();
         }
 
         public void UpdateConfiguration(Config configuration)
         {
             _config = configuration;
             _sprint.Configuration = configuration;
+            _autoAdvanceToggle.Configuration = configuration;
+            _easyBugCatching.UpdateConfiguration(configuration);
         }
 
         // Function that reads all inputs

@@ -1,7 +1,9 @@
 ﻿using p4gpc.tinyadditions.Configuration;
+using Reloaded.Memory.Sigscan;
 using Reloaded.Mod.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace p4gpc.tinyadditions
@@ -34,7 +36,7 @@ namespace p4gpc.tinyadditions
 
         public void LogDebug(string message)
         {
-            if (Configuration.DebugEnabled)
+            if(Configuration.DebugEnabled) 
                 _logger.WriteLine($"[TinyAdditions] {message}");
         }
 
@@ -46,6 +48,24 @@ namespace p4gpc.tinyadditions
         public void LogError(string message, Exception e)
         {
             _logger.WriteLine($"[TinyAdditions] {message}: {e.Message}", System.Drawing.Color.Red);
+        }
+
+        // Signature Scans for a location in memory, returning -1 if the scan fails otherwise the address
+        public long SigScan(string pattern, int baseAddress, string functionName)
+        {
+            try
+            {
+                using var thisProcess = Process.GetCurrentProcess();
+                using var scanner = new Scanner(thisProcess, thisProcess.MainModule);
+                long functionAddress = scanner.CompiledFindPattern(pattern).Offset + baseAddress;
+                LogDebug($"Found the {functionName} address at {functionAddress:X}");
+                return functionAddress;
+            }
+            catch (Exception exception)
+            {
+                LogError($"An error occured trying to find the {functionName} function address. Not initializing. Please report this with information on the version of P4G you are running.", exception);
+                return -1;
+            }
         }
     }
 }

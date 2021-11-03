@@ -9,19 +9,12 @@ using System;
 using System.Runtime.InteropServices;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using System.Diagnostics;
+using p4gpc.tinyadditions.Additions;
 
 namespace p4gpc.tinyadditions
 {
-    class Sprint
+    class Sprint : Addition
     {
-        // Current mod configuration
-        public Config Configuration { get; set; }
-        private Utils _utils;
-
-        // Variables for memory editing/reading
-        private IReloadedHooks _hooks;
-        private int _baseAddress;
-        private IMemory _memory;
         private IntPtr _speedLocation;
 
         // For calling C# code from ASM.
@@ -31,24 +24,15 @@ namespace p4gpc.tinyadditions
         // Keep track of the normal speed
         private float normalSpeed = 0;
 
-        public Sprint(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks)
+        public Sprint(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
-            Configuration = configuration;
-            _utils = utils;
-            _memory = memory;
-            _baseAddress = baseAddress;
             _speedLocation = (IntPtr)0x21AB56F4 + _baseAddress;
-            _hooks = hooks;
 
-            try
+            _utils.Log("Initialising sprint");
+
+            // Initialise speed factor change hook (when switching fields the normal speed changes sometimes)
+            string[] function =
             {
-
-                _utils.Log("Initialising sprint");
-                //hooks.Utilities.GetAbsoluteCallMnemonics(SpeedChanged, out _speedChangeReverseWrapper)
-
-                // Initialise speed factor change hook (when switching fields the normal speed changes sometimes)
-                string[] function =
-                {
                     $"use32",
                     // Not always necessary but good practice;
                     // just in case the parent function doesn't preserve them.
@@ -57,25 +41,15 @@ namespace p4gpc.tinyadditions
                     $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 };
 
-                // Create function hook
-                using var thisProcess = Process.GetCurrentProcess();
-                _baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
-                using var scanner = new Scanner(thisProcess, thisProcess.MainModule);
-                int speedChangeAddress;
-                speedChangeAddress = scanner.CompiledFindPattern("51 BA 70 01 00 00 A3").Offset + _baseAddress - 31;
-                _speedChangeHook = _hooks.CreateAsmHook(function, speedChangeAddress, AsmHookBehaviour.ExecuteAfter).Activate(); // 51 BA 70 01 00 00 A3
-            }
-            catch (Exception e)
-            {
-                _utils.LogError($"Error hooking into input functions. Unloading mod", e);
-                Suspend();
-                return;
-            }
+            // Create function hook
+            long speedChangeAddress = _utils.SigScan("51 BA 70 01 00 00 A3", _baseAddress, "speed change") - 31;
+            if (speedChangeAddress == -1) return;
+            _speedChangeHook = _hooks.CreateAsmHook(function, speedChangeAddress, AsmHookBehaviour.ExecuteAfter).Activate();
             _utils.Log("Successfully initialised sprint");
         }
 
-        public void Suspend() => _speedChangeHook?.Disable();
-        public void Resume() => _speedChangeHook?.Activate();
+        public override void Suspend() => _speedChangeHook?.Disable();
+        public override void Resume() => _speedChangeHook?.Enable();
 
 
         public void ToggleSprint()
@@ -96,7 +70,7 @@ namespace p4gpc.tinyadditions
                 {
                     // Turn sprint on
                     _utils.LogDebug($"Sprint on. New speed is {currentSpeed * Configuration.SprintSpeed}");
-                    _memory.SafeWrite(_speedLocation, (currentSpeed * Configuration.SprintSpeed));
+                    _memory.SafeWrite(_speedLocation, currentSpeed * Configuration.SprintSpeed);
                 }
             }
             catch (Exception e)
