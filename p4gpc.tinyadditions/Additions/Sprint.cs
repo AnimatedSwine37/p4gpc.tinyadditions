@@ -41,9 +41,13 @@ namespace p4gpc.tinyadditions
                     $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 };
 
-            // Create function hook
-            long speedChangeAddress = _utils.SigScan("51 BA 70 01 00 00 A3", _baseAddress, "speed change") - 31;
+            // Find function location
+            long speedChangeAddress = _utils.SigScan("F3 0F 11 05 ?? ?? ?? ?? F3 0F 11 0D ?? ?? ?? ?? C7 05 ?? ?? ?? ?? 00 00 40 40 E8 ?? ?? ?? ??", _baseAddress, "speed change");
             if (speedChangeAddress == -1) return;
+            // Find speed location
+            _memory.SafeRead((IntPtr)(speedChangeAddress + 4), out _speedLocation);
+            _utils.LogDebug($"The speed location is 0x{_speedLocation:X}");
+            // Create speed changed hook
             _speedChangeHook = _hooks.CreateAsmHook(function, speedChangeAddress, AsmHookBehaviour.ExecuteAfter).Activate();
             _utils.Log("Successfully initialised sprint");
         }

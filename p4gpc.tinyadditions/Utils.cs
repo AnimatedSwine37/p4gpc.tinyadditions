@@ -58,7 +58,7 @@ namespace p4gpc.tinyadditions
                 using var thisProcess = Process.GetCurrentProcess();
                 using var scanner = new Scanner(thisProcess, thisProcess.MainModule);
                 long functionAddress = scanner.CompiledFindPattern(pattern).Offset + baseAddress;
-                LogDebug($"Found the {functionName} address at {functionAddress:X}");
+                LogDebug($"Found the {functionName} address at 0x{functionAddress:X}");
                 return functionAddress;
             }
             catch (Exception exception)
