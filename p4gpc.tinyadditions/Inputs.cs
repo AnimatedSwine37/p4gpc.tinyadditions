@@ -128,7 +128,7 @@ namespace p4gpc.tinyadditions
             // Check if sprint was pressed
             if (_config.SprintEnabled && (input == (int)_config.SprintButton || (keyboard && InputInCombo(input, _config.SprintButton))))
                 _sprint.ToggleSprint();
-            if (_config.AdvanceEnabled && InEvent() && (input == (int)_config.AdvanceButton || (keyboard && InputInCombo(input, _config.AdvanceButton))))
+            if (_config.AdvanceEnabled && _utils.InEvent() && (input == (int)_config.AdvanceButton || (keyboard && InputInCombo(input, _config.AdvanceButton))))
                 _autoAdvanceToggle.ToggleAutoAdvance();
 
         }
@@ -210,14 +210,6 @@ namespace p4gpc.tinyadditions
         private bool InputInCombo(int inputCombo, Input desiredInput)
         {
             return GetInputsFromCombo(inputCombo).Contains(desiredInput);
-        }
-
-        private bool InEvent()
-        {
-            // Get the current event
-            _memory.SafeRead((IntPtr)_baseAddress + 0x9CAB94, out short[] currentEvent, 3);
-            // If either the event major or minor isn't 0 we are in an event otherwise we're not
-            return currentEvent[0] != 0 || currentEvent[2] != 0;
         }
 
         [Function(Register.ebx, Register.edi, StackCleanup.Callee)]

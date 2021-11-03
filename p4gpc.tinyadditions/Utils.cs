@@ -16,6 +16,7 @@ namespace p4gpc.tinyadditions
         private int _baseAddress;
         private IMemory _memory;
         private IntPtr _flagLocation;
+        private IntPtr _eventLocation;
         public Utils(Config configuration, ILogger logger, int baseAddress, IMemory memory)
         {
             // Initialise fields
@@ -26,8 +27,32 @@ namespace p4gpc.tinyadditions
 
             // Get flag base location
             long flagPointer = SigScan("68 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 83 C4 0C 81 C6 40 03 00 00", "flag pointer");
-            _memory.SafeRead((IntPtr)flagPointer + 1, out _flagLocation);
-            LogDebug($"The flags start at 0x{_flagLocation:X}");
+            if (flagPointer != -1)
+            {
+                try
+                {
+                    _memory.SafeRead((IntPtr)flagPointer + 1, out _flagLocation);
+                    LogDebug($"The flags start at 0x{_flagLocation:X}");
+                }
+                catch (Exception e)
+                {
+                    LogError("Unable to read flag start location", e);
+                }
+            }
+            // Get event major and minor location
+            long eventPointer = SigScan("A3 ?? ?? ?? ?? 8B 85 ?? ?? ?? ?? 66 89 0D ?? ?? ?? ??", "event pointer");
+            if (eventPointer != -1)
+            {
+                try
+                {
+                    _memory.SafeRead((IntPtr)eventPointer + 1, out _eventLocation);
+                    LogDebug($"The current event is at 0x{_eventLocation:X}");
+                }
+                catch (Exception e)
+                {
+                    LogError("Unable to read event location", e);
+                }
+            }
         }
 
         public enum Input
@@ -83,6 +108,7 @@ namespace p4gpc.tinyadditions
         // Gets the value of a specified flag
         public bool CheckFlag(int flag)
         {
+            if (_flagLocation == IntPtr.Zero) return false;
             try
             {
                 _memory.SafeRead(_flagLocation + flag / 8, out byte flagByte);
@@ -99,6 +125,7 @@ namespace p4gpc.tinyadditions
         // Turns a specified flag on or off
         public void ChangeFlag(int flag, bool state)
         {
+            if (_flagLocation == IntPtr.Zero) return;
             try
             {
                 _memory.SafeRead(_flagLocation + flag / 8, out byte flagByte);
@@ -117,5 +144,16 @@ namespace p4gpc.tinyadditions
                 LogError($"Unable to change flag {flag}", e);
             }
         }
+
+        // Checks if the player is currently in an event
+        public bool InEvent()
+        {
+            if (_eventLocation == IntPtr.Zero) return false;
+            // Get the current event
+            _memory.SafeRead(_eventLocation, out short[] currentEvent, 3);
+            // If either the event major or minor isn't 0 we are in an event otherwise we're not
+            return currentEvent[0] != 0 || currentEvent[2] != 0;
+        }
+
     }
 }
