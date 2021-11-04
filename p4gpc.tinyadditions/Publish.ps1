@@ -4,8 +4,6 @@ $solutionName = "p4gpc.tinyadditions.csproj"
 $publishName = "p4gpc.tinyadditions.zip"
 $publishDirectory = "Publish"
 
-Get-ChildItem
-
 [Environment]::CurrentDirectory = $PWD
 
 # Clean anything in existing Release directory.
