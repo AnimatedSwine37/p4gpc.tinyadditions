@@ -16,9 +16,6 @@ Makes it so the player always gets a perfect catch when catching bugs at the shr
 ## Planned Additions
 These are features that I would like to add however, there is no guarantee that any of them every actually happen. If you want to have a crack at implementing one of these then go for it! (more info in [contributing](#contributing)) 
 
-### Persona 5 Battle Enhancements
-Make P4G's battle system implement some of the enhancements in P5 such as the button shortcuts and infinite Persona switching. A lot of work on this has already been done by Rirurin, however, idk if it will be combined into this mod or made into a seperate one.
-
 ### Automatic Arcana Bonus On NG+
 Make it so the player always gets the social link Arcana bonuses if they have a s.link's max rank item. This would need to be combined with a flowscript mod do get the text correct however, the actual mechanic of increasing points gained if you have a Persona of a matcching Arcana appears to be hardcoded, hence the need for a Reloaded mod. More research needs to be done into this to tell whether it's actually hardcoded.
 
