@@ -24,10 +24,13 @@ namespace p4gpc.tinyadditions.Configuration
         [Description("Enables you to sprint, slightly increasing your run speed. Pressing the sprint button toggles it.")]
         public bool SprintEnabled { get; set; } = true;
 
+        [DisplayName("Sprint Only In Dungeons")]
+        [Description("If enabled you will only be able to sprint when in dungeons.")]
+        public bool SprintDungeonsOnly { get; set; } = false;
+
         [DisplayName("Sprint Speed")]
         [Description("How much to multiply your speed by when sprinting (default is 1.3)")]
         public float SprintSpeed { get; set; } = 1.3f;
-        
         
         [DisplayName("Auto Advance Toggle Button")]
         [Description("The button you press to toggle auto advance text. This does not overwrite the button's function but adds to it" +
@@ -45,7 +48,5 @@ namespace p4gpc.tinyadditions.Configuration
         [DisplayName("Debug Mode")]
         [Description("Logs additional information to the console that is useful for debugging.")]
         public bool DebugEnabled { get; set; } = false;
-
-
     }
 }
