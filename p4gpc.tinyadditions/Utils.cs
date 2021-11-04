@@ -17,6 +17,8 @@ namespace p4gpc.tinyadditions
         private IMemory _memory;
         private IntPtr _flagLocation;
         private IntPtr _eventLocation;
+        private IntPtr _inMenuLocation;
+
         public Utils(Config configuration, ILogger logger, int baseAddress, IMemory memory)
         {
             // Initialise fields
@@ -51,6 +53,20 @@ namespace p4gpc.tinyadditions
                 catch (Exception e)
                 {
                     LogError("Unable to read event location", e);
+                }
+            }
+            // Get in menu location
+            long inMenuPointer = SigScan("89 3D ?? ?? ?? ?? 89 1D ?? ?? ?? ?? A3 ?? ?? ?? ??", "in menu pointer");
+            if (inMenuPointer != -1)
+            {
+                try
+                {
+                    _memory.SafeRead((IntPtr)inMenuPointer + 2, out _inMenuLocation);
+                    LogDebug($"The current menu is at 0x{_inMenuLocation:X}");
+                }
+                catch (Exception e)
+                {
+                    LogError("Unable to read in menu location", e);
                 }
             }
         }
@@ -150,10 +166,34 @@ namespace p4gpc.tinyadditions
         {
             if (_eventLocation == IntPtr.Zero) return false;
             // Get the current event
-            _memory.SafeRead(_eventLocation, out short[] currentEvent, 3);
-            // If either the event major or minor isn't 0 we are in an event otherwise we're not
-            return currentEvent[0] != 0 || currentEvent[2] != 0;
+            try
+            {
+                _memory.SafeRead(_eventLocation, out short[] currentEvent, 3);
+                // If either the event major or minor isn't 0 we are in an event otherwise we're not
+                return currentEvent[0] != 0 || currentEvent[2] != 0;
+            }
+            catch (Exception e)
+            {
+                LogError("Error getting current event", e);
+                return false;
+            }
         }
 
+        // Checks if the player is currently in a menu
+        public bool InMenu()
+        {
+            if (_inMenuLocation == IntPtr.Zero) return false;
+            try
+            {
+                _memory.SafeRead(_inMenuLocation, out int currentMenu);
+                LogDebug($"The current menu is {currentMenu}");
+                return !(currentMenu == 256 || currentMenu == 128);
+            }
+            catch (Exception e)
+            {
+                LogError("Error getting current menu", e);
+            }
+            return false;
+        }
     }
 }
