@@ -18,6 +18,6 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Build Mod
-      run: ./p4gpc.tinyadditions/Publish.ps1
+      run: ./Publish.ps1
       shell: powershell
       working-directory: p4gpc.tinyadditions
