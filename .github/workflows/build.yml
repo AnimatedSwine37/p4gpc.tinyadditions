@@ -21,3 +21,8 @@ jobs:
       run: ./Publish.ps1
       shell: powershell
       working-directory: p4gpc.tinyadditions
+    - name: Upload Build
+      uses: actions/upload-artifact@v2
+      with:
+       name: tiny-additions-build
+       path: "./p4gpc.tinyadditions/Publish/p4gpc.tinyadditions.zip"   

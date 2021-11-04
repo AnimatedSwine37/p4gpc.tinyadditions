@@ -1,5 +1,6 @@
 # Project Output Paths
-$modOutputPath = "TempBuild"
+$modOutputRootPath = "TempBuild"
+$modOutputPath = "$modOutputRootPath/p4gpc.tinyadditions"
 $solutionName = "p4gpc.tinyadditions.csproj"
 $publishName = "p4gpc.tinyadditions.zip"
 $publishDirectory = "Publish"
@@ -43,7 +44,7 @@ Get-ChildItem $modOutputPath -Include *.xml -Recurse | Remove-Item -Force -Recur
 
 # Compress
 Add-Type -A System.IO.Compression.FileSystem
-[IO.Compression.ZipFile]::CreateFromDirectory($modOutputPath, "$publishDirectory/$publishName")
+[IO.Compression.ZipFile]::CreateFromDirectory($modOutputRootPath, "$publishDirectory/$publishName")
 
 # Cleanup After Build
 Remove-Item $modOutputPath -Recurse
