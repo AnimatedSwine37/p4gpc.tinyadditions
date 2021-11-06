@@ -123,15 +123,39 @@ namespace p4gpc.tinyadditions
         }
 
         // Do stuff with the inputs
-        private void InputHappened(int input)
+        private bool[] sprintPressed = { false, false };
+        private void InputHappened(int input, bool risingEdge, bool keyboard)
         {
-            _utils.LogDebug($"Input was {(Input)input}");
-            // Check if sprint was pressed
-            if (_config.SprintEnabled && (input == (int)_config.SprintButton || InputInCombo(input, _config.SprintButton)) && !_utils.InMenu() && !(_config.SprintDungeonsOnly && !_utils.CheckFlag(3075)))
-                _sprint.ToggleSprint();
-            if (_config.AdvanceEnabled && _utils.InEvent() && (input == (int)_config.AdvanceButton || InputInCombo(input, _config.AdvanceButton)))
-                _autoAdvanceToggle.ToggleAutoAdvance();
+            _utils.LogDebug($"Input was {(Input)input} and was {(risingEdge ? "rising" : "falling")} edge");
 
+            // Sprint code
+            if (_config.SprintEnabled)
+            {
+                // Check if sprint was pressed
+                sprintPressed[1] = sprintPressed[0];
+                if (InputInCombo(input, _config.SprintButton, keyboard))
+                    sprintPressed[0] = true;
+                else
+                    sprintPressed[0] = false;
+
+                // Sprint was let go of
+                if (sprintPressed[1] && !sprintPressed[0] && !_config.SprintToggle)
+                    _sprint.DisableSprint();
+                // Check if sprint should be toggled/enabled
+                else if (sprintPressed[0] && !_utils.InMenu() && !(_config.SprintDungeonsOnly && !_utils.CheckFlag(3075)))
+                {
+                    // Toggle sprint
+                    if (_config.SprintToggle)
+                        _sprint.ToggleSprint();
+                    // Hold to sprint
+                    else
+                        _sprint.EnableSprint();
+                }
+            }
+
+            // Check if auto advance should be toggled
+            if (_config.AdvanceEnabled && _utils.InEvent() && (input == (int)_config.AdvanceButton || InputInCombo(input, _config.AdvanceButton, keyboard)) && risingEdge)
+                _autoAdvanceToggle.ToggleAutoAdvance();
         }
 
         // Get keyboard inputs
@@ -142,11 +166,17 @@ namespace p4gpc.tinyadditions
             else if (input == (int)Input.Cross) input = (int)Input.Circle;
             // Decide whether the input needs to be processed (only rising edge for now)
             if (RisingEdge(input, lastKeyboardInput))
-                InputHappened(input);
+                InputHappened(input, true, true);
+            else if (FallingEdge(input, lastKeyboardInput))
+                InputHappened(input, false, true);
             // Update the last inputs
             lastKeyboardInput = input;
             if (controllerInputHistory[0] == 0)
+            {
+                if (lastControllerInput != 0)
+                    InputHappened(input, false, false);
                 lastControllerInput = 0;
+            }
             _utils.ArrayPush(controllerInputHistory, 0);
         }
 
@@ -156,9 +186,9 @@ namespace p4gpc.tinyadditions
             // Get the input
             _utils.ArrayPush(controllerInputHistory, input);
             input = GetControllerInput();
-            // Decide whether the input needs to be processed (only rising edge for now)
+            // Decide whether the input needs to be processed
             if (RisingEdge(input, lastControllerInput))
-                InputHappened(input);
+                InputHappened(input, true, false);
             // Update last input
             lastControllerInput = input;
         }
@@ -168,6 +198,12 @@ namespace p4gpc.tinyadditions
         {
             if (currentInput == 0) return false;
             return currentInput != lastInput;
+        }
+
+        // Checks if an input was falling edge (the button was let go of)
+        private bool FallingEdge(int currentInput, int lastInput)
+        {
+            return lastInput != 0 && currentInput != lastInput;
         }
 
         // Gets controller input returning an input combo int if a combo was done (like what keyboard produces)
@@ -197,15 +233,20 @@ namespace p4gpc.tinyadditions
         }
 
         // Works out what inputs were pressed if a combination of keys were pressed (only applicable to keyboard)
-        private List<Input> GetInputsFromCombo(int inputCombo)
+        private List<Input> GetInputsFromCombo(int inputCombo, bool keyboard)
         {
             // List of the inputs found in the combo
             List<Input> foundInputs = new List<Input>();
             // Check if the input isn't actually a combo, if so we can directly return it
             if (Enum.IsDefined(typeof(Input), inputCombo))
             {
-
-                foundInputs.Add((Input)inputCombo);
+                // Switch cross and circle if it is one of them as it is opposite compared to controller
+                if (keyboard && inputCombo == (int)Input.Circle)
+                    foundInputs.Add(Input.Cross);
+                else if (keyboard && inputCombo == (int)Input.Cross)
+                    foundInputs.Add(Input.Circle);
+                else
+                    foundInputs.Add((Input)inputCombo);
                 return foundInputs;
             }
 
@@ -222,9 +263,9 @@ namespace p4gpc.tinyadditions
                 {
                     inputCombo -= possibleInput;
                     // Switch cross and circle if it is one of them as it is opposite compared to controller
-                    if (possibleInput == (int)Input.Circle)
+                    if (keyboard && possibleInput == (int)Input.Circle)
                         foundInputs.Add(Input.Cross);
-                    else if (possibleInput == (int)Input.Cross)
+                    else if (keyboard && possibleInput == (int)Input.Cross)
                         foundInputs.Add(Input.Circle);
                     else
                         foundInputs.Add((Input)possibleInput);
@@ -236,9 +277,9 @@ namespace p4gpc.tinyadditions
 
         // Checks if the desired input is a part of the combo
         // (so individual keyboard inputs aren't missed if they were pressed with other keys like pressing esc whilst running)
-        private bool InputInCombo(int inputCombo, Input desiredInput)
+        private bool InputInCombo(int inputCombo, Input desiredInput, bool keyboard)
         {
-            return GetInputsFromCombo(inputCombo).Contains(desiredInput);
+            return GetInputsFromCombo(inputCombo, keyboard).Contains(desiredInput);
         }
 
         [Function(Register.ebx, Register.edi, StackCleanup.Callee)]

@@ -31,7 +31,11 @@ namespace p4gpc.tinyadditions.Configuration
         [DisplayName("Sprint Speed")]
         [Description("How much to multiply your speed by when sprinting (default is 1.3)")]
         public float SprintSpeed { get; set; } = 1.3f;
-        
+
+        [DisplayName("Toggle Sprint")]
+        [Description("If enabled pressing the sprint button will toggle sprint, otherwise you must hold it.")]
+        public bool SprintToggle { get; set; } = false;
+
         [DisplayName("Auto Advance Toggle Button")]
         [Description("The button you press to toggle auto advance text. This does not overwrite the button's function but adds to it" +
             "(e.g. if you were to set the next textbox button it would toggle auto advance and go to the next textbox.)")]

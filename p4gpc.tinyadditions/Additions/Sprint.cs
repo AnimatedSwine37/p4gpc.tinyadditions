@@ -60,22 +60,45 @@ namespace p4gpc.tinyadditions
         {
             try
             {
-                _utils.Log($"Toggling sprint.");
                 // Get current speed
                 _memory.SafeRead(_speedLocation, out float currentSpeed);
                 // Alter speed
                 if (currentSpeed > normalSpeed)
                 {
-                    // Turn sprint off
-                    _utils.LogDebug($"Sprint off. New speed is {normalSpeed}");
-                    _memory.SafeWrite(_speedLocation, normalSpeed);
+                    DisableSprint();
                 }
                 else
                 {
-                    // Turn sprint on
-                    _utils.LogDebug($"Sprint on. New speed is {currentSpeed * Configuration.SprintSpeed}");
-                    _memory.SafeWrite(_speedLocation, currentSpeed * Configuration.SprintSpeed);
+                    EnableSprint();
                 }
+            }
+            catch (Exception e)
+            {
+                _utils.LogError($"Error changing speed", e);
+            }
+        }
+
+        public void EnableSprint()
+        {
+            try
+            {
+                _utils.Log("Sprint enabled");
+                _utils.LogDebug($"Sprint on. New speed is {normalSpeed * Configuration.SprintSpeed}");
+                _memory.SafeWrite(_speedLocation, normalSpeed * Configuration.SprintSpeed);
+            }
+            catch (Exception e)
+            {
+                _utils.LogError($"Error changing speed", e);
+            }
+        }
+
+        public void DisableSprint()
+        {
+            try
+            {
+                _utils.Log("Sprint disabled");
+                _utils.LogDebug($"Sprint off. New speed is {normalSpeed}");
+                _memory.SafeWrite(_speedLocation, normalSpeed);
             }
             catch (Exception e)
             {
