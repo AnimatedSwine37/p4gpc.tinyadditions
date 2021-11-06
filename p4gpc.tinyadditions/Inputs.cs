@@ -27,7 +27,7 @@ namespace p4gpc.tinyadditions
         private IAsmHook _keyboardHook;
         private IAsmHook _controllerHook;
         // Keeps track of the last inputs for rising/falling edge detection
-        private int[] lastControllerInputs = { 0, 0 };
+        private int[] controllerInputHistory = new int[10];
         private int lastKeyboardInput = 0;
         // For accessing memory
         private IMemory _memory;
@@ -121,19 +121,19 @@ namespace p4gpc.tinyadditions
             _easyBugCatching.UpdateConfiguration(configuration);
         }
 
-        // Function that reads all inputs
-        private void InputHappened(int input, bool keyboard)
+        // Do stuff with the inputs
+        private void InputHappened(int input)
         {
             _utils.LogDebug($"Input was {(Input)input}");
             // Check if sprint was pressed
-            if (_config.SprintEnabled && (input == (int)_config.SprintButton || (keyboard && InputInCombo(input, _config.SprintButton))) && !_utils.InMenu() && !(_config.SprintDungeonsOnly && !_utils.CheckFlag(3075)))
+            if (_config.SprintEnabled && (input == (int)_config.SprintButton || InputInCombo(input, _config.SprintButton)) && !_utils.InMenu() && !(_config.SprintDungeonsOnly && !_utils.CheckFlag(3075)))
                 _sprint.ToggleSprint();
-            if (_config.AdvanceEnabled && _utils.InEvent() && (input == (int)_config.AdvanceButton || (keyboard && InputInCombo(input, _config.AdvanceButton))))
+            if (_config.AdvanceEnabled && _utils.InEvent() && (input == (int)_config.AdvanceButton || InputInCombo(input, _config.AdvanceButton)))
                 _autoAdvanceToggle.ToggleAutoAdvance();
 
         }
 
-        // Switches keyboard inputs to match controller ones
+        // Get keyboard inputs
         private void KeyboardInputHappened(int input)
         {
             // Switch cross and circle as it is opposite compared to controller
@@ -141,23 +141,25 @@ namespace p4gpc.tinyadditions
             else if (input == (int)Input.Cross) input = (int)Input.Circle;
             // Decide whether the input needs to be processed (only rising edge for now)
             if (RisingEdge(input, lastKeyboardInput))
-                InputHappened(input, true);
-            // Update the last input
+                InputHappened(input);
+            // Update the last inputs
             lastKeyboardInput = input;
-            lastControllerInputs[1] = lastControllerInputs[0];
-            lastControllerInputs[0] = 0;
+            if (controllerInputHistory[0] == 0)
+                lastControllerInput = 0;
+            _utils.ArrayPush(controllerInputHistory, 0);
         }
 
         // Gets controller inputs
         private void ControllerInputHappened(int input)
         {
-            //_utils.LogDebug($"Debug input was {input}, lastInput: {lastControllerInputs[0]}, {lastControllerInputs[1]}, {lastControllerInputs[2]} ");
+            // Get the input
+            _utils.ArrayPush(controllerInputHistory, input);
+            input = GetControllerInput();
             // Decide whether the input needs to be processed (only rising edge for now)
-            if (RisingEdge(input, lastControllerInputs[0]) && RisingEdge(input, lastControllerInputs[1]))
-                InputHappened(input, false);
-            // Update the last input
-            lastControllerInputs[1] = lastControllerInputs[0];
-            lastControllerInputs[0] = input;
+            if (RisingEdge(input, lastControllerInput))
+                InputHappened(input);
+            // Update last input
+            lastControllerInput = input;
         }
 
         // Checks if an input was rising edge (the button was just pressed)
@@ -165,6 +167,32 @@ namespace p4gpc.tinyadditions
         {
             if (currentInput == 0) return false;
             return currentInput != lastInput;
+        }
+
+        // Gets controller input returning an input combo int if a combo was done (like what keyboard produces)
+        private int GetControllerInput()
+        {
+            int inputCombo = 0;
+            int lastInput = 0;
+            // Work out the pressed buttons
+            for (int i = 0; i < controllerInputHistory.Length; i++)
+            {
+                int input = controllerInputHistory[i];
+                // Start of a combo
+                if (lastInput == 0 && input != 0)
+                    inputCombo = input;
+                // Middle of a combo
+                else if (lastInput != 0 && input != 0)
+                    inputCombo += input;
+                // End of a combo
+                else if (input == 0 && lastInput != 0 && i != 1)
+                    break;
+                // Two 0's in a row means the combo must be over
+                else if (i != 0 && input == 0 && lastInput == 0)
+                    break;
+                lastInput = input;
+            }
+            return inputCombo;
         }
 
         // Works out what inputs were pressed if a combination of keys were pressed (only applicable to keyboard)
