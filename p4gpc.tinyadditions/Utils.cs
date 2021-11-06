@@ -195,5 +195,15 @@ namespace p4gpc.tinyadditions
             }
             return false;
         }
+        
+        // Pushes an item to the beginning of the array, pushing everything else forward and removing the last element
+        public void ArrayPush<T>(T[] array, T newItem)
+        {
+            for(int i = array.Length - 1; i > 0; i--)
+            {
+                array[i] = array[i - 1];
+            }
+            array[0] = newItem;
+        }
     }
 }
