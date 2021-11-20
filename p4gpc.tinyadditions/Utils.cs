@@ -18,6 +18,7 @@ namespace p4gpc.tinyadditions
         private IntPtr _flagLocation;
         private IntPtr _eventLocation;
         private IntPtr _inMenuLocation;
+        private IntPtr _itemLocation;
 
         public Utils(Config configuration, ILogger logger, int baseAddress, IMemory memory)
         {
@@ -69,6 +70,31 @@ namespace p4gpc.tinyadditions
                     LogError("Unable to read in menu location", e);
                 }
             }
+        }
+
+        // Initialises the item location as right at startup the pointer does not exist
+        // (called once an input is read)
+        public bool InitialiseItemLocation()
+        {
+            // Get item location
+            long itemLocationPointer = SigScan("A1 ?? ?? ?? ?? 0F BF D6 ?? ?? C1 E1 04", "item pointer");
+            if (itemLocationPointer != -1)
+            {
+                try
+                {
+                    _memory.SafeRead((IntPtr)itemLocationPointer + 1, out IntPtr pointer);
+                    LogDebug($"The item pointer location is 0x{pointer:X}");
+                    _memory.SafeRead(pointer, out _itemLocation);
+                    LogDebug($"Items begin at 0x{_itemLocation:X}");
+                    if ((int)_itemLocation == 0) return false;
+                }
+                catch (Exception e)
+                {
+                    LogError("Unable to read item location", e);
+                    return false;
+                }
+            }
+            return true;
         }
 
         public enum Input
@@ -195,11 +221,26 @@ namespace p4gpc.tinyadditions
             }
             return false;
         }
-        
+
+        // Checks how many of an item the player has
+        public int GetItem(int itemId)
+        {
+            try
+            {
+                _memory.SafeRead(_itemLocation + itemId, out byte amount);
+                return amount;
+            }
+            catch (Exception e)
+            {
+                LogError($"Error checking the amount of item {itemId}", e);
+                return -1;
+            }
+        }
+
         // Pushes an item to the beginning of the array, pushing everything else forward and removing the last element
         public void ArrayPush<T>(T[] array, T newItem)
         {
-            for(int i = array.Length - 1; i > 0; i--)
+            for (int i = array.Length - 1; i > 0; i--)
             {
                 array[i] = array[i - 1];
             }

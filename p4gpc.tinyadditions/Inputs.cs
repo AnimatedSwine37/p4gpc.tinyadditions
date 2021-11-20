@@ -38,6 +38,9 @@ namespace p4gpc.tinyadditions
         private Sprint _sprint;
         private AutoAdvanceToggle _autoAdvanceToggle;
         private EasyBugCatching _easyBugCatching;
+        private ArcanaAffinityBoost _arcanaAffinityBoost;
+
+        private bool utilsInitialised = false;
 
         // Current mod configuration
         private Config _config { get; set; }
@@ -95,6 +98,7 @@ namespace p4gpc.tinyadditions
             _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
             _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
             _easyBugCatching = new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks);
+            _arcanaAffinityBoost = new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks);
         }
 
         public void Suspend()
@@ -161,6 +165,9 @@ namespace p4gpc.tinyadditions
         // Get keyboard inputs
         private void KeyboardInputHappened(int input)
         {
+            // Initialise item location once inputs start being received 
+            if (!utilsInitialised && _utils.InitialiseItemLocation()) utilsInitialised = true;
+
             // Switch cross and circle as it is opposite compared to controller
             if (input == (int)Input.Circle) input = (int)Input.Cross;
             else if (input == (int)Input.Cross) input = (int)Input.Circle;
@@ -271,7 +278,8 @@ namespace p4gpc.tinyadditions
                         foundInputs.Add((Input)possibleInput);
                 }
             }
-            _utils.LogDebug($"Input combo was {string.Join(", ", foundInputs)}");
+            if(foundInputs.Count > 0)
+                _utils.LogDebug($"Input combo was {string.Join(", ", foundInputs)}");
             return foundInputs;
         }
 
