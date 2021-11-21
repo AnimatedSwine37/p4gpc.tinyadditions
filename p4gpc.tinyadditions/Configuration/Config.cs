@@ -49,6 +49,17 @@ namespace p4gpc.tinyadditions.Configuration
         [Description("Makes it so you will always get a perfect catch when catching bugs at the shrine.")]
         public bool EasyBugCatchingEnabled { get; set; } = true;
 
+        [DisplayName("Social Link Affinity Boost")]
+        [Description("Makes it so you also get the boosted social link affinity that you normal get from having a " +
+            "Persona of the matching Arcana if you have the link's max rank item from a previous playthrough. (This does not stack with the matching Arcana bonus, only one will ever be applied)")]
+        public bool AffinityBoostEnabled { get; set; } = true;
+
+        [DisplayName("Social Link Always Boosted Affinity")]
+        [Description("Makes it so you always get the matching Arcana boosted social link affinity for every link. " +
+            "(The matching arcana message may not display in game, however, the bonus is being applied in the background)")]
+        public bool AlwaysBoostedAffinity { get; set; } = false;
+
+
         [DisplayName("Debug Mode")]
         [Description("Logs additional information to the console that is useful for debugging.")]
         public bool DebugEnabled { get; set; } = false;

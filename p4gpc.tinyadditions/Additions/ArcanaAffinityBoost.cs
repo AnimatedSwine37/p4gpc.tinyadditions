@@ -19,7 +19,6 @@ namespace p4gpc.tinyadditions.Additions
         private IReverseWrapper<BonusAffinityFunction> _bonusAffinityReverseWrapper;
         private IReverseWrapper<NormalAffinityFunction> _normalAffinityReverseWrapper;
         private IReverseWrapper<AffinityStartFunction> _affinityStartReverseWrapper;
-        private IntPtr _checkBonusAddress;
         private IntPtr _affinityScaleAddress;
         private SocialLink currentSocialLink;
 
@@ -81,20 +80,31 @@ namespace p4gpc.tinyadditions.Additions
 
         public override void Resume()
         {
-            throw new NotImplementedException();
+            _bonusAffinityHook?.Enable();
+            _affinityStartHook?.Enable();
         }
 
         public override void Suspend()
         {
-            throw new NotImplementedException();
+            _bonusAffinityHook?.Disable();
+            _affinityStartHook?.Disable();  
         }
 
         // If the player has the max s link item sets the scale for normal affinity
         // to the one when you have a Persona of a matching Arcana (1.51)
         private void BonusAffinity(int eax)
         {
+            if (!_configuration.AlwaysBoostedAffinity && !_configuration.AffinityBoostEnabled) return;
+            // Always boosted
+            if(_configuration.AlwaysBoostedAffinity)
+            {
+                _memory.SafeWrite(_affinityScaleAddress, 1.51f);
+                _utils.LogDebug($"Giving bonus affinity for {currentSocialLink}");
+                return;
+            }
+            // Normal max item boost check
             if (!SocialLinkItems.TryGetValue(currentSocialLink, out Item sLinkItem)) return;
-            if (_utils.GetItem((int)sLinkItem) > 0)
+            if (_configuration.AlwaysBoostedAffinity || _utils.GetItem((int)sLinkItem) > 0)
             {
                 _memory.SafeWrite(_affinityScaleAddress, 1.51f);
                 _utils.LogDebug($"Giving bonus affinity for {currentSocialLink}");

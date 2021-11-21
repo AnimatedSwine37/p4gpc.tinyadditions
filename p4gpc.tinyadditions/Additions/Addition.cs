@@ -10,7 +10,7 @@ namespace p4gpc.tinyadditions.Additions
     abstract class Addition
     {
         // Current mod configuration
-        public Config Configuration { get; set; }
+        protected Config _configuration;
         protected Utils _utils;
 
         // Variables for memory editing/reading
@@ -20,7 +20,7 @@ namespace p4gpc.tinyadditions.Additions
 
         public Addition(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks)
         {
-            Configuration = configuration;
+            _configuration = configuration;
             _utils = utils;
             _hooks = hooks;
             _memory = memory;
@@ -29,5 +29,9 @@ namespace p4gpc.tinyadditions.Additions
 
         public abstract void Suspend();
         public abstract void Resume();
+        public virtual void UpdateConfiguration(Config configuration)
+        {
+            _configuration = configuration;
+        }
     }
 }

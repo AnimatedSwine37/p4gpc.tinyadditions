@@ -35,10 +35,9 @@ namespace p4gpc.tinyadditions
         // Base address (probably won't ever change)
         private int _baseAddress;
         // Functionalities
-        private Sprint _sprint;
         private AutoAdvanceToggle _autoAdvanceToggle;
-        private EasyBugCatching _easyBugCatching;
-        private ArcanaAffinityBoost _arcanaAffinityBoost;
+        private Sprint _sprint;
+        private List<Addition> _additions = new List<Addition>();
 
         private bool utilsInitialised = false;
 
@@ -96,34 +95,33 @@ namespace p4gpc.tinyadditions
             _utils.Log("Successfully hooked into input functions");
 
             _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
+            _additions.Add(_sprint);
             _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
-            _easyBugCatching = new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks);
-            _arcanaAffinityBoost = new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks);
+            _additions.Add(_autoAdvanceToggle);
+            _additions.Add(new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks));
+            _additions.Add(new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks));
         }
 
         public void Suspend()
         {
             _keyboardHook?.Disable();
             _controllerHook?.Disable();
-            _sprint?.Suspend();
-            _autoAdvanceToggle?.Suspend();
-            _easyBugCatching?.Suspend();
+            foreach(Addition addition in _additions)
+                addition.Suspend();
         }
         public void Resume()
         {
             _keyboardHook?.Enable();
             _controllerHook?.Enable();
-            _sprint?.Resume();
-            _autoAdvanceToggle?.Resume();
-            _easyBugCatching?.Resume();
+            foreach (Addition addition in _additions)
+                addition.Resume();
         }
 
         public void UpdateConfiguration(Config configuration)
         {
             _config = configuration;
-            _sprint.Configuration = configuration;
-            _autoAdvanceToggle.Configuration = configuration;
-            _easyBugCatching.UpdateConfiguration(configuration);
+            foreach (Addition addition in _additions)
+                addition.UpdateConfiguration(configuration);
         }
 
         // Do stuff with the inputs

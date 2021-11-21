@@ -40,13 +40,13 @@ namespace p4gpc.tinyadditions.Additions
 
         public override void Suspend() => _easyBugsHook?.Disable();
 
-        public void UpdateConfiguration(Config configuration)
+        public override void UpdateConfiguration(Config configuration)
         {
-            if (Configuration.EasyBugCatchingEnabled && !configuration.EasyBugCatchingEnabled)
+            if (_configuration.EasyBugCatchingEnabled && !configuration.EasyBugCatchingEnabled)
                 Suspend();
-            if (!Configuration.EasyBugCatchingEnabled && configuration.EasyBugCatchingEnabled)
+            if (!_configuration.EasyBugCatchingEnabled && configuration.EasyBugCatchingEnabled)
                 Resume();
-            Configuration = configuration;
+            _configuration = configuration;
         }
     }
 }

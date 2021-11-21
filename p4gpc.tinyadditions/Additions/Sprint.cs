@@ -83,8 +83,8 @@ namespace p4gpc.tinyadditions
             try
             {
                 _utils.Log("Sprint enabled");
-                _utils.LogDebug($"Sprint on. New speed is {normalSpeed * Configuration.SprintSpeed}");
-                _memory.SafeWrite(_speedLocation, normalSpeed * Configuration.SprintSpeed);
+                _utils.LogDebug($"Sprint on. New speed is {normalSpeed * _configuration.SprintSpeed}");
+                _memory.SafeWrite(_speedLocation, normalSpeed * _configuration.SprintSpeed);
             }
             catch (Exception e)
             {
