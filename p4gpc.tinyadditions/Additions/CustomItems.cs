@@ -7,9 +7,11 @@ using Reloaded.Memory.Sources;
 using Reloaded.Memory.Streams;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 
@@ -27,6 +29,8 @@ namespace p4gpc.tinyadditions.Additions
         private long _freezeControlsLocation;
         private int _currentSkill;
         private GetDungeonFlowLocation getDungeonFlowLocation;
+        private List<CustomItemInfo> _customItems;
+        private CustomItemInfo _currentCustomItem;
 
         public unsafe CustomItems(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
@@ -73,6 +77,8 @@ namespace p4gpc.tinyadditions.Additions
             };
             _freezeControlsHook = hooks.CreateAsmHook(freezeControlsFunction, _freezeControlsLocation, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
 
+            _customItems = LoadCustomItems();
+
             _utils.Log("Custom items initialised");
         }
 
@@ -80,32 +86,59 @@ namespace p4gpc.tinyadditions.Additions
         {
             _flowFunctionHook?.Enable();
             _checkSkillHook?.Enable();
-            _freezeControlsHook?.Enable();  
+            _freezeControlsHook?.Enable();
         }
 
         public override void Suspend()
         {
             _flowFunctionHook?.Disable();
             _checkSkillHook?.Disable();
-            _freezeControlsHook?.Disable();  
+            _freezeControlsHook?.Disable();
+        }
+
+        private List<CustomItemInfo> LoadCustomItems()
+        {
+            var items = new List<CustomItemInfo>();
+            if (!Directory.Exists(@"mods/customItems"))
+                return items;
+
+            var itemFiles = Directory.GetFiles(@"mods/customItems", "*.json", SearchOption.AllDirectories);
+            foreach (var itemFile in itemFiles)
+            {
+                try
+                {
+                    string json = File.ReadAllText(itemFile, Encoding.UTF8);
+                    items.Add(JsonSerializer.Deserialize<CustomItemInfo>(json));
+                    _utils.Log($"Loaded {Path.GetFileNameWithoutExtension(itemFile)} custom item");
+                }
+                catch (Exception e)
+                {
+                    _utils.LogError($"Unable to load custom item info file {Path.GetFileName(itemFile)}", e);
+                }
+            }
+
+            return items;
         }
 
         private void SetFunctionId(int eax)
         {
             IntPtr dungeonFlowLocation = getDungeonFlowLocation();
-            string flowFunctionName = "dng_escape";
-            if (_currentSkill == 311)
-                flowFunctionName = "eve_dressroom_yukiko";
-            int functionId = (byte)FindFlowFunctionId(dungeonFlowLocation, flowFunctionName);
             _utils.LogDebug($"The dungeon flow is at 0x{dungeonFlowLocation:X}");
+            
+            // Get the function id
+            string flowFunctionName = "dng_escape";
+            if (_currentCustomItem != null)
+                flowFunctionName = _currentCustomItem.FunctionName;
+
+            int functionId = (byte)FindFlowFunctionId(dungeonFlowLocation, flowFunctionName);
 
             // Check for function ids greater than one byte (this will likely break stuff currently)
-            if(functionId > 255)
+            if (functionId > 255)
             {
                 functionId = 10; // Run a function that won't do anything instead of the actual requested function
                 _utils.LogError("Tried to use a function with id greater than 255. Please report this with details on the mods you are running as it is not currently handled properly.");
             }
-            
+
             // Change the function id that will be pushed
             _memory.SafeWrite((IntPtr)_flowFunctionLocation + 11, (byte)functionId);
         }
@@ -115,7 +148,7 @@ namespace p4gpc.tinyadditions.Additions
         {
             var functions = GetFlowFunctions(flowLocation);
             int functionIndex = functions.IndexOf(functionName);
-            if(functionIndex != -1)
+            if (functionIndex != -1)
                 return functionIndex;
             _utils.LogError($"Couldn't find index of function {functionName}. Please ensure the mod this function is from is correctly enabled and that the names match exactly (case sensitive).");
             return 10;
@@ -127,15 +160,15 @@ namespace p4gpc.tinyadditions.Additions
             // Read flow data
             _memory.SafeRead(flowLocation + 40, out int numFuncs);
             _memory.SafeReadRaw(flowLocation + 112, out byte[] rawNames, numFuncs * 32);
-            
+
             // Go through the raw data, constructing a list of the names
             List<string> functions = new List<string>();
             int stringStart = 0;
             int currentFunction = 0;
-            for(int i = 0; i < rawNames.Length; i++)
+            for (int i = 0; i < rawNames.Length; i++)
             {
                 // Check if we're up to the next string
-                if(i >= 32 && i % 32 == 0)
+                if (i >= 32 && i % 32 == 0)
                 {
                     currentFunction++;
                     stringStart = i;
@@ -148,7 +181,7 @@ namespace p4gpc.tinyadditions.Additions
                     functions.Add(Encoding.UTF8.GetString(rawNames.Skip(stringStart).Take(i - stringStart).ToArray()));
                     // Set counters for the start of the next string
                     i = (currentFunction + 1) * 32 - 1;
-                } 
+                }
             }
             return functions;
         }
@@ -157,7 +190,10 @@ namespace p4gpc.tinyadditions.Additions
         private bool CheckSkill(int skill)
         {
             _currentSkill = skill;
-            return skill == 246 || skill == 311;
+            _currentCustomItem = _customItems.FirstOrDefault(item => item.SkillId == skill);
+            if(_currentCustomItem == null)
+                return skill == 246;
+            return skill == 246 || skill == _currentCustomItem.SkillId;
         }
 
         // Returns true if the game's controls should be frozen (used when switching floors through the flowscript)
@@ -166,7 +202,9 @@ namespace p4gpc.tinyadditions.Additions
             bool freeze = false;
             if (_currentSkill == 246)
                 freeze = true;
-            
+            else if (_currentCustomItem != null)
+                freeze = _currentCustomItem.FreezeControls;
+
             _memory.SafeWrite((IntPtr)_freezeControlsLocation + 8, freeze);
         }
 

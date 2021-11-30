@@ -1,0 +1,5 @@
+{
+    "SkillId": 123,
+    "FunctionName": "my_flowscript_function",
+    "FreezeControls": false
+}
