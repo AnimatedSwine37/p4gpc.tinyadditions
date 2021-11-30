@@ -100,6 +100,7 @@ namespace p4gpc.tinyadditions
             _additions.Add(_autoAdvanceToggle);
             _additions.Add(new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks));
             _additions.Add(new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks));
+            _additions.Add(new CustomItems(_utils, _baseAddress, _config, _memory, _hooks));
         }
 
         public void Suspend()

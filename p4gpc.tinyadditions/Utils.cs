@@ -129,6 +129,11 @@ namespace p4gpc.tinyadditions
             _logger.WriteLine($"[TinyAdditions] {message}: {e.Message}", System.Drawing.Color.Red);
         }
 
+        public void LogError(string message)
+        {
+            _logger.WriteLine($"[TinyAdditions] {message}", System.Drawing.Color.Red);
+        }
+
         // Signature Scans for a location in memory, returning -1 if the scan fails otherwise the address
         public long SigScan(string pattern, string functionName)
         {

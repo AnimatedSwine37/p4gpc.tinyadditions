@@ -13,7 +13,6 @@ namespace p4gpc.tinyadditions.Additions
     class EasyBugCatching : Addition
     {
         // For calling C# code from ASM.
-        //private IReverseWrapper<SpeedChangedFunction> _speedChangeReverseWrapper;
         private IAsmHook _easyBugsHook;
 
         public EasyBugCatching(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
