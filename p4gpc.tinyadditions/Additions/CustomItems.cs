@@ -117,6 +117,7 @@ namespace p4gpc.tinyadditions.Additions
             int functionIndex = functions.IndexOf(functionName);
             if(functionIndex != -1)
                 return functionIndex;  
+            _utils.LogError($"Couldn't find index of function {functionName}. Please ensure the mod this function is from is correctly enabled and that the names match exactly (case sensitive).")
             return 10;
         }
 
