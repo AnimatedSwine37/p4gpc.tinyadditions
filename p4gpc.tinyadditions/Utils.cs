@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace p4gpc.tinyadditions
 {
@@ -28,48 +29,42 @@ namespace p4gpc.tinyadditions
             _baseAddress = baseAddress;
             _memory = memory;
 
-            // Get flag base location
-            long flagPointer = SigScan("68 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 83 C4 0C 81 C6 40 03 00 00", "flag pointer");
-            if (flagPointer != -1)
+            // Initialise locations
+            List<Task> locationInits = new List<Task>();
+            locationInits.Add(Task.Run(() =>
+            {
+                InitLocation("flag", "68 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 83 C4 0C 81 C6 40 03 00 00", 1, out _flagLocation);
+            }));
+            locationInits.Add(Task.Run(() =>
+            {
+                InitLocation("event", "A3 ?? ?? ?? ?? 8B 85 ?? ?? ?? ?? 66 89 0D ?? ?? ?? ??", 1, out _eventLocation);
+            }));
+
+            locationInits.Add(Task.Run(() =>
+            {
+                InitLocation("in menu", "89 3D ?? ?? ?? ?? 89 1D ?? ?? ?? ?? A3 ?? ?? ?? ??", 2, out _inMenuLocation);
+            }));
+            Task.WaitAll(locationInits.ToArray());
+        }
+
+        // Initialise the location to something in memory by sig scanning for a pointer
+        public void InitLocation(string name, string signature, int pointerOffset, out IntPtr outVar)
+        {
+            outVar = IntPtr.Zero;
+            long pointer = SigScan(signature, $"{name} pointer");
+            if (pointer != -1)
             {
                 try
                 {
-                    _memory.SafeRead((IntPtr)flagPointer + 1, out _flagLocation);
-                    LogDebug($"The flags start at 0x{_flagLocation:X}");
+                    _memory.SafeRead((IntPtr)pointer + pointerOffset, out outVar);
+                    LogDebug($"The {name} is at 0x{outVar:X}");
                 }
                 catch (Exception e)
                 {
-                    LogError("Unable to read flag start location", e);
+                    LogError($"Unable to read {name} location", e);
                 }
             }
-            // Get event major and minor location
-            long eventPointer = SigScan("A3 ?? ?? ?? ?? 8B 85 ?? ?? ?? ?? 66 89 0D ?? ?? ?? ??", "event pointer");
-            if (eventPointer != -1)
-            {
-                try
-                {
-                    _memory.SafeRead((IntPtr)eventPointer + 1, out _eventLocation);
-                    LogDebug($"The current event is at 0x{_eventLocation:X}");
-                }
-                catch (Exception e)
-                {
-                    LogError("Unable to read event location", e);
-                }
-            }
-            // Get in menu location
-            long inMenuPointer = SigScan("89 3D ?? ?? ?? ?? 89 1D ?? ?? ?? ?? A3 ?? ?? ?? ??", "in menu pointer");
-            if (inMenuPointer != -1)
-            {
-                try
-                {
-                    _memory.SafeRead((IntPtr)inMenuPointer + 2, out _inMenuLocation);
-                    LogDebug($"The current menu is at 0x{_inMenuLocation:X}");
-                }
-                catch (Exception e)
-                {
-                    LogError("Unable to read in menu location", e);
-                }
-            }
+
         }
 
         // Initialises the item location as right at startup the pointer does not exist

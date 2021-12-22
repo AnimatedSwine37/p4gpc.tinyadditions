@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using static p4gpc.tinyadditions.P4GEnums;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 
@@ -27,12 +28,23 @@ namespace p4gpc.tinyadditions.Additions
             _utils.Log("Initialising Bonus Social Link Affinity");
 
             // Get bonus addresses
-            long checkBonusAddress = _utils.SigScan("F3 0F 10 0D ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 8B 7A ??", "check bonus affinity");
-            if (checkBonusAddress == -1) return;
-            long functionStartAddress = _utils.SigScan("55 ?? ?? 83 EC 08 56 57 66 ?? ?? 89 55 ??", "social link affinity start");
-            if (functionStartAddress == -1) return;
-            long giveBonusAddress = _utils.SigScan("0F 84 ?? ?? ?? ?? 47 E8 ?? ?? ?? ??", "give bonus affinity pointer");
-            if (giveBonusAddress == -1) return;
+            long functionStartAddress = -1, checkBonusAddress = -1, giveBonusAddress = -1;
+            List<Task> sigScanTasks = new List<Task>();
+            sigScanTasks.Add(Task.Run(() =>
+            {
+                checkBonusAddress = _utils.SigScan("F3 0F 10 0D ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 8B 7A ??", "check bonus affinity");
+            }));
+            sigScanTasks.Add(Task.Run(() =>
+            {
+                functionStartAddress = _utils.SigScan("55 ?? ?? 83 EC 08 56 57 66 ?? ?? 89 55 ??", "social link affinity start");
+            }));
+            sigScanTasks.Add(Task.Run(() =>
+            {
+                giveBonusAddress = _utils.SigScan("0F 84 ?? ?? ?? ?? 47 E8 ?? ?? ?? ??", "give bonus affinity pointer");
+            }));
+            Task.WaitAll(sigScanTasks.ToArray());
+            if (checkBonusAddress == -1 || giveBonusAddress == -1 || functionStartAddress == -1) return;
+
             _memory.SafeRead((IntPtr)(giveBonusAddress + 2), out byte giveBonusOffset);
             giveBonusAddress += giveBonusOffset + 6;
             _utils.LogDebug($"The give bonus address is 0x{giveBonusAddress:X}");
@@ -87,7 +99,7 @@ namespace p4gpc.tinyadditions.Additions
         public override void Suspend()
         {
             _bonusAffinityHook?.Disable();
-            _affinityStartHook?.Disable();  
+            _affinityStartHook?.Disable();
         }
 
         // If the player has the max s link item sets the scale for normal affinity
@@ -96,7 +108,7 @@ namespace p4gpc.tinyadditions.Additions
         {
             if (!_configuration.AlwaysBoostedAffinity && !_configuration.AffinityBoostEnabled) return;
             // Always boosted
-            if(_configuration.AlwaysBoostedAffinity)
+            if (_configuration.AlwaysBoostedAffinity)
             {
                 _memory.SafeWrite(_affinityScaleAddress, 1.51f);
                 _utils.LogDebug($"Giving bonus affinity for {currentSocialLink}");

@@ -14,6 +14,7 @@ using static p4gpc.tinyadditions.Utils;
 using p4gpc.tinyadditions.Additions;
 using Reloaded.Memory.Sigscan;
 using Reloaded.Memory.Sigscan.Structs;
+using System.Threading.Tasks;
 
 namespace p4gpc.tinyadditions
 {
@@ -80,34 +81,61 @@ namespace p4gpc.tinyadditions
             };
 
                 // Create function hooks
-                long keyboardAddress = _utils.SigScan("85 DB 74 05 E8 ?? ?? ?? ?? 8B 7D F8", "keyboard hook");
-                long controllerAddress = _utils.SigScan("0F AB D3 89 5D C8", "controller hook");
-                _keyboardHook = hooks.CreateAsmHook(keyboardFunction, keyboardAddress, AsmHookBehaviour.ExecuteFirst).Activate(); // call 85 DB 74 05 E8 7F 81 13 DA
-                _controllerHook = hooks.CreateAsmHook(controllerFunction, controllerAddress, AsmHookBehaviour.ExecuteFirst).Activate();
+                long keyboardAddress = -1, controllerAddress = -1;
+                List<Task> hookSigScans = new List<Task>();
+                hookSigScans.Add(Task.Run(() => keyboardAddress = _utils.SigScan("85 DB 74 05 E8 ?? ?? ?? ?? 8B 7D F8", "keyboard hook")));
+                hookSigScans.Add(Task.Run(() => controllerAddress = _utils.SigScan("0F AB D3 89 5D C8", "controller hook")));
+                Task.WaitAll(hookSigScans.ToArray());
+
+                if (keyboardAddress != -1 && controllerAddress != -1)
+                {
+                    _keyboardHook = hooks.CreateAsmHook(keyboardFunction, keyboardAddress, AsmHookBehaviour.ExecuteFirst).Activate();
+                    _controllerHook = hooks.CreateAsmHook(controllerFunction, controllerAddress, AsmHookBehaviour.ExecuteFirst).Activate();
+                    _utils.Log("Successfully hooked into input functions");
+                }
+                else
+                {
+                    _utils.LogError($"Unable to find input functions to hook into. Additions that rely on inputs will not work");
+                }
             }
             catch (Exception e)
             {
-                _utils.LogError($"Error hooking into input functions. Unloading mod", e);
-                Suspend();
-                return;
+                _utils.LogError($"Error hooking into input functions. Additions that rely on inputs will not work", e);
             }
 
-            _utils.Log("Successfully hooked into input functions");
 
-            _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
-            _additions.Add(_sprint);
-            _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
-            _additions.Add(_autoAdvanceToggle);
-            _additions.Add(new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks));
-            _additions.Add(new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks));
-            _additions.Add(new CustomItems(_utils, _baseAddress, _config, _memory, _hooks));
+            // Initialise additions
+            List<Task> additionInits = new List<Task>();
+            additionInits.Add(Task.Run(() =>
+            {
+                _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
+                _additions.Add(_sprint);
+            }));
+            additionInits.Add(Task.Run(() =>
+            {
+                _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
+                _additions.Add(_autoAdvanceToggle);
+            }));
+            additionInits.Add(Task.Run(() =>
+            {
+                _additions.Add(new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks));
+            }));
+            additionInits.Add(Task.Run(() =>
+            {
+                _additions.Add(new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks));
+            }));
+            additionInits.Add(Task.Run(() =>
+            {
+                _additions.Add(new CustomItems(_utils, _baseAddress, _config, _memory, _hooks));
+            }));
+            Task.WaitAll(additionInits.ToArray());
         }
 
         public void Suspend()
         {
             _keyboardHook?.Disable();
             _controllerHook?.Disable();
-            foreach(Addition addition in _additions)
+            foreach (Addition addition in _additions)
                 addition.Suspend();
         }
         public void Resume()
@@ -277,7 +305,7 @@ namespace p4gpc.tinyadditions
                         foundInputs.Add((Input)possibleInput);
                 }
             }
-            if(foundInputs.Count > 0)
+            if (foundInputs.Count > 0)
                 _utils.LogDebug($"Input combo was {string.Join(", ", foundInputs)}");
             return foundInputs;
         }

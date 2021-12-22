@@ -36,9 +36,12 @@ namespace p4gpc.tinyadditions.Additions
         {
             _utils.Log("Initialising custom items");
 
-            _flowFunctionLocation = _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 6A 05", "custom items flow function");
-            _freezeControlsLocation = _utils.SigScan("C7 46 ?? 03 00 00 00 B8 01 00 00 00 5E 5D C3 A1 ?? ?? ?? ??", "custom items freeze controls");
-            long skillIdLocation = _utils.SigScan("B8 F6 00 00 00 66 ?? ?? 75 17", "custom skill id");
+            long skillIdLocation = -1;
+            List<Task> sigScanTasks = new List<Task>();
+            sigScanTasks.Add(Task.Run(() => _flowFunctionLocation = _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 6A 05", "custom items flow function")));
+            sigScanTasks.Add(Task.Run(() => _freezeControlsLocation = _utils.SigScan("C7 46 ?? 03 00 00 00 B8 01 00 00 00 5E 5D C3 A1 ?? ?? ?? ??", "custom items freeze controls")));
+            sigScanTasks.Add(Task.Run(() => skillIdLocation = _utils.SigScan("B8 F6 00 00 00 66 ?? ?? 75 17", "custom skill id")));
+            Task.WaitAll(sigScanTasks.ToArray());
 
             // Get the dungeon flow location
             _memory.SafeRead((IntPtr)_flowFunctionLocation + 0x1A, out int getDungeonFlowFuncOffset);
@@ -73,7 +76,9 @@ namespace p4gpc.tinyadditions.Additions
             string[] freezeControlsFunction =
             {
                 $"use32",
+                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
                 $"{hooks.Utilities.GetAbsoluteCallMnemonics(FreezeControls, out _freezeControlsReverseWrapper)}",
+                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
             _freezeControlsHook = hooks.CreateAsmHook(freezeControlsFunction, _freezeControlsLocation, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
 
@@ -108,7 +113,13 @@ namespace p4gpc.tinyadditions.Additions
                 try
                 {
                     string json = File.ReadAllText(itemFile, Encoding.UTF8);
-                    items.Add(JsonSerializer.Deserialize<CustomItemInfo>(json));
+                    CustomItemInfo item = JsonSerializer.Deserialize<CustomItemInfo>(json);
+                    if (item.SkillId == 0 && item.FunctionName == null && item.FreezeControls == false)
+                    {
+                        _utils.LogError($"Invalid custom item info file {Path.GetFileName(itemFile)}");
+                        continue;
+                    }
+                    items.Add(item);
                     _utils.Log($"Loaded {Path.GetFileNameWithoutExtension(itemFile)} custom item");
                 }
                 catch (Exception e)
@@ -124,13 +135,13 @@ namespace p4gpc.tinyadditions.Additions
         {
             IntPtr dungeonFlowLocation = getDungeonFlowLocation();
             _utils.LogDebug($"The dungeon flow is at 0x{dungeonFlowLocation:X}");
-            
+
             // Get the function id
             string flowFunctionName = "dng_escape";
             if (_currentCustomItem != null)
                 flowFunctionName = _currentCustomItem.FunctionName;
 
-            int functionId = (byte)FindFlowFunctionId(dungeonFlowLocation, flowFunctionName);
+            int functionId = FindFlowFunctionId(dungeonFlowLocation, flowFunctionName);
 
             // Check for function ids greater than one byte (this will likely break stuff currently)
             if (functionId > 255)
@@ -149,7 +160,10 @@ namespace p4gpc.tinyadditions.Additions
             var functions = GetFlowFunctions(flowLocation);
             int functionIndex = functions.IndexOf(functionName);
             if (functionIndex != -1)
+            {
+                _utils.LogDebug($"The flow function id for {functionName} is {functionIndex}");
                 return functionIndex;
+            }
             _utils.LogError($"Couldn't find index of function {functionName}. Please ensure the mod this function is from is correctly enabled and that the names match exactly (case sensitive).");
             return 10;
         }
@@ -189,11 +203,16 @@ namespace p4gpc.tinyadditions.Additions
         // Checks whether the skill is one that should call a flow function
         private bool CheckSkill(int skill)
         {
+            _utils.LogDebug($"Skill {skill} used");
             _currentSkill = skill;
             _currentCustomItem = _customItems.FirstOrDefault(item => item.SkillId == skill);
-            if(_currentCustomItem == null)
+            if (_currentCustomItem == null)
+            {
+                _utils.LogDebug("The skill is not a custom item skill");
                 return skill == 246;
-            return skill == 246 || skill == _currentCustomItem.SkillId;
+            }
+            _utils.LogDebug("The skill is a custom item skill");
+            return true;
         }
 
         // Returns true if the game's controls should be frozen (used when switching floors through the flowscript)
