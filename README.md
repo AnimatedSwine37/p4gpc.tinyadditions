@@ -13,11 +13,29 @@ Allows the player to toggle the auto advance text setting during events similarl
 ### Easy Bug Catching
 Makes it so the player always gets a perfect catch when catching bugs at the shrine regardless of how you time it.
 
+### Custom Items
+Adds the ability for items to call flowscript functions when used in the items menu the same way that goho-m does. Unlike all other additions this one cannot be toggled as it doesn't directly add anything, it just gives Aemulus mods more power. 
+#### Adding Items
+Any Aemulus package can use this by creating a custom item json file in the customItems folder at the root of an Aemulus package. This json file can be called anything although itemName.json is generally a good name. The structure of the file needs to match that of [sampleCustomItem.json](sampleCustomItem.json) (copy this file into your package and edit the values to fit your needs).
+
+- SkillId: The id of the skill that your item will use which you'll have to set in itemtbl.bin (you will most likely want this skill to just be an unused one).
+- FunctionName: The name of the function that you want to be called when the item is used. This function must be located in field/script/dungeon.bf and the name must be exactly the same (case sensitive)
+- FreezeControls: If true the player will be unable move and interact with anything apart from messages and selections once they use the item until another field is loaded into. Unless you know that your function will load the player into another field 100% of the time leave this as false otherwise you will softlock the game.
+
+### Automatic Arcana Bonus On NG+
+Makes it so the player always gets the social link Arcana bonuses if they have a s.link's max rank item. If you want to see a message indicating this is in game it is reccomended that you use the companion Aemulus mod available in releases (although the companion mod only gives a visual change, the actual giving of the bonus is done by tinyadditions).
+
 ## Planned Additions
 These are features that I would like to add however, there is no guarantee that any of them every actually happen. If you want to have a crack at implementing one of these then go for it! (more info in [contributing](#contributing)) 
 
-### Automatic Arcana Bonus On NG+
-Make it so the player always gets the social link Arcana bonuses if they have a s.link's max rank item. This would need to be combined with a flowscript mod do get the text correct however, the actual mechanic of increasing points gained if you have a Persona of a matcching Arcana appears to be hardcoded, hence the need for a Reloaded mod. More research needs to be done into this to tell whether it's actually hardcoded.
+### Input Reading/Writing Library
+This is not actually an addition but a splitting of the input reading capabilities of tinyadditions into their own Reloaded mod which would act as a library which any other mods could use to easily read and write inputs to the game.
+
+### Sprint Animation
+Make the player have a unique animation when they sprint so it is clear when you are and aren't sprinting.
+
+### Unhardcoded Persona Using Enemies
+Currently only certain enemies in game can use Personas, these are hardcoded. If possible make it so any enemies can use Personas (this will likely be very difficult and is generally quite ambitious so don't expect it to happen soon or ever).
 
 ### More Things
 There are undoubtedly many other things you could do to P4G that would require Reloaded to do. If you have any good ideas feel free to create an issue explaining them and I (and anyone else who wants to) may make it assuming it isn't completely unrealistic and is interesting.
