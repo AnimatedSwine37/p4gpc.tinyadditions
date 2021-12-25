@@ -27,11 +27,11 @@ dotnet publish $solutionName -c Release -r win-x64 --self-contained false -o "$m
 if (Test-Path -Path "$modOutputPath/x86/ModConfig.json") {
     Move-Item -Path "$modOutputPath/x86/ModConfig.json" -Destination "$modOutputPath/ModConfig.json"
 }
-if (Test-Path -Path "$modOutputPath/x86/Preview.png") {
-    Move-Item -Path "$modOutputPath/x86/Preview.png" -Destination "$modOutputPath/Preview.png"
+if (Test-Path -Path "$modOutputPath/x86/TinyAdditions.png") {
+    Move-Item -Path "$modOutputPath/x86/TinyAdditions.png" -Destination "$modOutputPath/TinyAdditions.png"
 }
-if (Test-Path -Path "$modOutputPath/x64/Preview.png") {
-    Remove-Item "$modOutputPath/x64/Preview.png"
+if (Test-Path -Path "$modOutputPath/x64/TinyAdditions.png") {
+    Remove-Item "$modOutputPath/x64/TinyAdditions.png"
 }
 if (Test-Path -Path "$modOutputPath/x64/ModConfig.json") {
     Remove-Item "$modOutputPath/x64/ModConfig.json"
