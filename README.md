@@ -18,12 +18,12 @@ Adds the ability for items to call flowscript functions when used in the items m
 #### Adding Items
 Any Aemulus package can use this by creating a custom item json file in the customItems folder at the root of an Aemulus package. This json file can be called anything although itemName.json is generally a good name. The structure of the file needs to match that of [sampleCustomItem.json](sampleCustomItem.json) (copy this file into your package and edit the values to fit your needs).
 
-- SkillId: The id of the skill that your item will use which you'll have to set in itemtbl.bin (you will most likely want this skill to just be an unused one).
+- SkillId: The id of the skill that your item will use which you'll have to set in init_free/init/itemtbl.bin (you will most likely want this skill to just be an unused one). You will also need to copy the data of the traesto skill (246) to your new skill in init_free/battle/SKILL.tbl so it will be usable in dungeons.
 - FunctionName: The name of the function that you want to be called when the item is used. This function must be located in field/script/dungeon.bf and the name must be exactly the same (case sensitive)
 - FreezeControls: If true the player will be unable move and interact with anything apart from messages and selections once they use the item until another field is loaded into. Unless you know that your function will load the player into another field 100% of the time leave this as false otherwise you will softlock the game.
 
 ### Automatic Arcana Bonus On NG+
-Makes it so the player always gets the social link Arcana bonuses if they have a s.link's max rank item. If you want to see a message indicating this is in game it is reccomended that you use the companion Aemulus mod available in releases (although the companion mod only gives a visual change, the actual giving of the bonus is done by tinyadditions).
+Makes it so the player always gets the social link Arcana bonuses if they have a s.link's max rank item. If you want to see a message indicating this in game it is recommended that you also install the companion Aemulus mod available in [releases](https://github.com/AnimatedSwine37/p4gpc.tinyadditions/releases/latest) (although the companion mod only gives a visual change, the actual giving of the bonus is done by tinyadditions).
 
 ## Planned Additions
 These are features that I would like to add however, there is no guarantee that any of them every actually happen. If you want to have a crack at implementing one of these then go for it! (more info in [contributing](#contributing)) 
