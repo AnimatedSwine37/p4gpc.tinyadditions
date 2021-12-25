@@ -1,5 +1,5 @@
 # p4gpc.tinyadditions
-A WIP Reloaded-II mod that adds a collection of small QOL features to Persona 4 Golden PC
+A Reloaded-II mod that adds a collection of small QOL features to Persona 4 Golden PC. More details on using this mod are available on the [GameBanana page](https://gamebanana.com/mods/345639).
 
 ## Current Additions
 All of the features currently implemented are listed below. Each addition can be toggled on or off in the mod's configuration in Reloaded. By default all additions are enabled.
