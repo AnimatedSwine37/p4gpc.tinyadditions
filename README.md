@@ -37,6 +37,10 @@ Make the player have a unique animation when they sprint so it is clear when you
 ### Unhardcoded Persona Using Enemies
 Currently only certain enemies in game can use Personas, these are hardcoded. If possible make it so any enemies can use Personas (this will likely be very difficult and is generally quite ambitious so don't expect it to happen soon or ever).
 
+### Relearn Skills Anytime
+Make it so you can switch the skills known by a Persona by pressing a button from the stats menu in the same way you can in P5S. This would be done by calling the function that is used to relearn skills on scooter rides.
+(Idea by Kris! in discord)
+
 ### More Things
 There are undoubtedly many other things you could do to P4G that would require Reloaded to do. If you have any good ideas feel free to create an issue explaining them and I (and anyone else who wants to) may make it assuming it isn't completely unrealistic and is interesting.
 
