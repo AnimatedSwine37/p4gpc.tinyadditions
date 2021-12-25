@@ -33,6 +33,9 @@ namespace p4gpc.tinyadditions.Additions
             };
             _easyBugsHook = hooks.CreateAsmHook(function, functionAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
             _utils.Log("Easy Bug Catching initialised");
+
+            if (!_configuration.EasyBugCatchingEnabled)
+                _easyBugsHook.Disable();
         }
 
         public override void Resume() => _easyBugsHook?.Enable();
