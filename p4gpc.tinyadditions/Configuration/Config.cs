@@ -24,7 +24,7 @@ namespace p4gpc.tinyadditions.Configuration
         [DisplayName("Sprint")]
         [Description("Enables you to sprint, slightly increasing your run speed.")]
         [Category("Addition")]
-        public bool SprintEnabled { get; set; } = true;
+        public bool SprintEnabled { get; set; } = false;
 
         [DisplayName("Sprint Only In Dungeons")]
         [Description("If enabled you will only be able to sprint when in dungeons.")]
@@ -50,7 +50,7 @@ namespace p4gpc.tinyadditions.Configuration
         [DisplayName("Auto Advance Toggle")]
         [Description("Enables you to toggle auto advance text.")]
         [Category("Addition")]
-        public bool AdvanceEnabled { get; set; } = true;
+        public bool AdvanceEnabled { get; set; } = false;
 
         [DisplayName("Easy Bug Catching")]
         [Description("Makes it so you will always get a perfect catch when catching bugs at the shrine.")]
@@ -61,7 +61,7 @@ namespace p4gpc.tinyadditions.Configuration
         [Description("Makes it so you also get the boosted social link affinity that you normally get from having a " +
             "Persona of the matching Arcana if you have the link's max rank item from a previous playthrough. (This does not stack with the matching Arcana bonus, only one will ever be applied)")]
         [Category("Addition")]
-        public bool AffinityBoostEnabled { get; set; } = true;
+        public bool AffinityBoostEnabled { get; set; } = false;
 
         [DisplayName("Always Boosted Affinity")]
         [Description("Makes it so you always get the matching Arcana boosted social link affinity for every link. " +
