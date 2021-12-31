@@ -128,7 +128,12 @@ namespace p4gpc.tinyadditions
             {
                 _additions.Add(new CustomItems(_utils, _baseAddress, _config, _memory, _hooks));
             }));
+            //additionInits.Add(Task.Run(() =>
+            //{
+            //    _additions.Add(new RankupReady(_utils, _baseAddress, _config, _memory, _hooks));
+            //}));
             Task.WaitAll(additionInits.ToArray());
+            _additions.Add(new RankupReady(_utils, _baseAddress, _config, _memory, _hooks));
         }
 
         public void Suspend()

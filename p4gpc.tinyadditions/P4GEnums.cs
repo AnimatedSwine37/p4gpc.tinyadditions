@@ -6,7 +6,7 @@ namespace p4gpc.tinyadditions
 {
     static class P4GEnums
     {
-        public enum SocialLink
+        public enum SocialLink : short
         {
             Reserve,
             InvestigationTeam,
