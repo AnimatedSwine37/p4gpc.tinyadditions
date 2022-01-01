@@ -52,7 +52,7 @@ namespace p4gpc.tinyadditions.Additions
                 $"cmp eax, 0",
                 $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 // Jump back to the original code if we shouldn't display the rankup symbol
-                $"{hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)(checkLvlUpAddress - 1), false).Replace("jmp", "je")}",
+                $"{hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)(checkLvlUpAddress - 1), false)}",
                 // Get the rankup symbol back (I realise this is a roundabout way of doing things)
                 $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
                 $"{getRankupSymbolMnemonics}",
@@ -73,7 +73,7 @@ namespace p4gpc.tinyadditions.Additions
                 $"cmp eax, 1",
                 $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 // Jump back to the original code if already checked
-                $"{hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)(checkLvlUpAddress + 12), false).Replace("jmp", "je")}",
+                $"{hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)(checkLvlUpAddress + 12), false)}",
                 // Save xmm0
                 $"sub esp, 16", // allocate space on stack
                 $"movdqu dqword [esp], xmm0",
@@ -138,13 +138,13 @@ namespace p4gpc.tinyadditions.Additions
         }
 
         // Checks if the current s link has already been checked so an infinite loop doesn't happen
-        private bool AlreadyChecked()
+        private bool AlreadyChecked(int eax)
         {
             _slChecked = !_slChecked; // Flip checked (if it was checked we're going to have a new one which won't be)
             return !_slChecked;
         }
 
-        private int GetRankupSymbol()
+        private int GetRankupSymbol(int eax)
         {
             if (!_slChecked || !_rankupReady)
                 return 0;
@@ -162,10 +162,10 @@ namespace p4gpc.tinyadditions.Additions
 
         [Function(Register.eax, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate bool AlreadyCheckedFunction();
+        public delegate bool AlreadyCheckedFunction(int eax);
 
         [Function(Register.eax, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int GetRankupSymbolFunction();
+        public delegate int GetRankupSymbolFunction(int eax);
     }
 }
