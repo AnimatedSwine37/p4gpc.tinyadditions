@@ -50,7 +50,7 @@ namespace p4gpc.tinyadditions.Additions
             }));
             Task.WaitAll(sigScanTasks.ToArray());
 
-            if(displayRankStartAddress == -1 || displayRankAddress == -1 || checkLvlUpAddress == -1)
+            if (displayRankStartAddress == -1 || displayRankAddress == -1 || checkLvlUpAddress == -1)
             {
                 _utils.LogError("Failed to find all addresses required for Visible Rankup Ready. It will not be initialised.");
                 return;
@@ -141,7 +141,7 @@ namespace p4gpc.tinyadditions.Additions
                 Suspend();
             if (!_configuration.RankupReadyEnabled && configuration.RankupReadyEnabled)
                 Resume();
-            
+
             _configuration = configuration;
             _memory.Write(_rankupSymbolOffsetAddress, _configuration.RankupReadySymbolOffset);
         }
@@ -160,12 +160,17 @@ namespace p4gpc.tinyadditions.Additions
             //_utils.LogDebug($"The sl info address is 0x{slInfoAddress:X}");
             // Get the id of the current social link
             _memory.Read(slInfoAddress + 2, out SocialLink socialLink);
+            _memory.Read(slInfoAddress + 4, out short rank);
             // Check if it's ready to level up
             bool rankupReady;
-            if (!_checkIfSlLvlUp(socialLink))
+            if (!_checkIfSlLvlUp(socialLink) || IsStorySl(socialLink, rank))
             {
                 //_utils.LogDebug($"{socialLink} is not ready to level up");
                 rankupReady = false;
+            }
+            else if (socialLink == SocialLink.Fox)
+            {
+                rankupReady = IsFoxReady(rank);
             }
             else
             {
@@ -175,6 +180,26 @@ namespace p4gpc.tinyadditions.Additions
             if (!_slChecked || !rankupReady)
                 return 0;
             return (int)_configuration.RankupReadySymbol;
+        }
+
+        // Checks if a social link is one that can only be ranked up by story stuff
+        private bool IsStorySl(SocialLink sl, short rank)
+        {
+            if (sl == SocialLink.InvestigationTeam || sl == SocialLink.SeekersOfTruth || sl == SocialLink.Teddie)
+                return true;
+            else if ((sl == SocialLink.AdachiHunger || sl == SocialLink.AdachiJester) && rank >= 6)
+                return true;
+            return false;
+        }
+
+        // Checks if the fox is ready to rank up based on quests
+        private bool IsFoxReady(short rank)
+        {
+            return (_utils.CheckFlag(0 + 325) && !_utils.CheckFlag(0 + 0x0400 + 1696)) || (_utils.CheckFlag(0 + 332) && !_utils.CheckFlag(0 + 0x0400 + 1697))
+                    || (_utils.CheckFlag(0 + 339) && !_utils.CheckFlag(0 + 0x0400 + 1698)) || (_utils.CheckFlag(0 + 345) && !_utils.CheckFlag(0 + 0x0400 + 1699))
+                    || (_utils.CheckFlag(0 + 349) && !_utils.CheckFlag(0 + 0x0400 + 1700)) || (_utils.CheckFlag(0 + 355) && !_utils.CheckFlag(0 + 0x0400 + 1701))
+                    || (_utils.CheckFlag(0 + 360) && !_utils.CheckFlag(0 + 0x0400 + 1702)) || (_utils.CheckFlag(0 + 361) && !_utils.CheckFlag(0 + 0x0400 + 1703))
+                    || (_utils.CheckFlag(0 + 367) && !_utils.CheckFlag(0 + 0x0400 + 1704));
         }
 
         // Delegates for functions
