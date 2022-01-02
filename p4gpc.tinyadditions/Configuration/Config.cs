@@ -1,5 +1,6 @@
 ﻿using p4gpc.tinyadditions.Configuration.Implementation;
 using System.ComponentModel;
+using static p4gpc.tinyadditions.P4GEnums;
 using static p4gpc.tinyadditions.Utils;
 
 namespace p4gpc.tinyadditions.Configuration
@@ -69,10 +70,25 @@ namespace p4gpc.tinyadditions.Configuration
         [Category("Cheat")]
         public bool AlwaysBoostedAffinity { get; set; } = false;
 
-
         [DisplayName("Debug Mode")]
         [Description("Logs additional information to the console that is useful for debugging.")]
         [Category("Miscellaneous")]
         public bool DebugEnabled { get; set; } = false;
+
+        [DisplayName("Visible Rankup Ready")]
+        [Description("Adds a symbol next to a social link's rank in the S.Link menu indicating that they are ready to rank up if they are.")]
+        [Category("Addition")]
+        public bool RankupReadyEnabled { get; set; } = false;
+
+        [DisplayName("Rankup Ready Symbol")]
+        [Description("The symbol that is displayed when Visible Rankup Ready is enabled.")]
+        [Category("Addition Options")]
+        public Symbol RankupReadySymbol { get; set; } = Symbol.UpArrow;
+
+        [DisplayName("Rankup Ready Symbol Offset")]
+        [Description("How far the symbol is away from the rank number (default is 13)")]
+        [Category("Addition Options")]
+        public float RankupReadySymbolOffset { get; set; } = 13.0f;
+
     }
 }

@@ -5,6 +5,7 @@ using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Sources;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -22,10 +23,16 @@ namespace p4gpc.tinyadditions.Additions
         private IReverseWrapper<GetRankupSymbolFunction> _getRankupSymbolReverseWrapper;
         private CheckIfSlLvlUp _checkIfSlLvlUp;
         private bool _slChecked = false;
+        private IntPtr _rankupSymbolOffsetAddress;
 
         public RankupReady(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
             _utils.Log("Initialising Visible Rankup Ready");
+
+            // Initialise a place to store the offset of the rankup symbol
+            _rankupSymbolOffsetAddress = _memory.Allocate(4);
+            _memory.Write(_rankupSymbolOffsetAddress, _configuration.RankupReadySymbolOffset);
+
             // Sig scan stuff
             long displayRankStartAddress = -1, displayRankAddress = -1, checkLvlUpAddress = -1;
             List<Task> sigScanTasks = new List<Task>();
@@ -73,11 +80,15 @@ namespace p4gpc.tinyadditions.Additions
                 $"pop ecx",
                 $"pop ecx",
                 $"pop eax",
+                // Get value to increase xmm3 by
+                //$"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                //$"{hooks.Utilities.GetAbsoluteCallMnemonics(GetRankupSymbolOffset, out _getRankupSymbolOffsetReverseWrapper)}",
+                //$"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 // Restore xmm3
                 $"movdqu xmm3, dqword [esp]",
                 $"add esp, 16", // re-align the stack
-                // Alter xmm3, moving the rankup symbol to the right
-                $"addss xmm3, xmm7",
+                // Increase xmm3
+                $"addss xmm3, [{_rankupSymbolOffsetAddress}]",
                 $"jmp endCode",
                 // Pop all call registers if there was no rankup symbol to render
                 $"label noRankup",
@@ -124,6 +135,17 @@ namespace p4gpc.tinyadditions.Additions
             _displayRankHook?.Disable();
         }
 
+        public override void UpdateConfiguration(Config configuration)
+        {
+            if (_configuration.RankupReadyEnabled && !configuration.RankupReadyEnabled)
+                Suspend();
+            if (!_configuration.RankupReadyEnabled && configuration.RankupReadyEnabled)
+                Resume();
+            
+            _configuration = configuration;
+            _memory.Write(_rankupSymbolOffsetAddress, _configuration.RankupReadySymbolOffset);
+        }
+
         // Checks if the current s link has already been checked so an infinite loop doesn't happen
         private bool AlreadyChecked(int eax)
         {
@@ -134,6 +156,7 @@ namespace p4gpc.tinyadditions.Additions
         // Returns the symbol number to indicate that a social link is ready to rank up if they are, otherwise returns 0
         private int GetRankupSymbol(IntPtr slInfoAddress)
         {
+            if (!_configuration.RankupReadyEnabled) return 0;
             //_utils.LogDebug($"The sl info address is 0x{slInfoAddress:X}");
             // Get the id of the current social link
             _memory.Read(slInfoAddress + 2, out SocialLink socialLink);
@@ -151,7 +174,7 @@ namespace p4gpc.tinyadditions.Additions
             }
             if (!_slChecked || !rankupReady)
                 return 0;
-            return 164;
+            return (int)_configuration.RankupReadySymbol;
         }
 
         // Delegates for functions

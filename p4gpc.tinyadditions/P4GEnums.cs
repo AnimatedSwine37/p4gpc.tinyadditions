@@ -4,8 +4,16 @@ using System.Text;
 
 namespace p4gpc.tinyadditions
 {
-    static class P4GEnums
+    public static class P4GEnums
     {
+        public enum Symbol
+        {
+            DiagonalUpArrow = 48,
+            UpArrow = 164,
+            DotSmall = 308,
+            DotBig = 436
+        }
+
         public enum SocialLink : short
         {
             Reserve,
