@@ -28,7 +28,7 @@ Makes it so the player always gets the social link Arcana bonuses if they have a
 ### Visible Rankup Ready
 Displays a symbol next to a social link's rank in the S.Link menu indicating that they're ready to rank up if they are. This applies to every s.link except those that automatically level up during story events and Margaret. The Fox is unique as it will show as ready to rank up once you've completed the current request for it. I didn't give Margaret any custom logic as checking for a specific Persona with skills is more complicated. This addition does not apply to the social link details as of now. (Idea by alex.sh on discord)
 
-The symbol that is displayed can be chosen between 4 that I thought fit well and the x position of the symbol can also be adjusted.
+The symbol that is displayed can be chosen between 4 that I thought fit well and the x position of the symbol can also be adjusted. This is done in the mod's configuration and edits take effect in real-time (once you press save) so you can easily find a position and symbol that you like.
 
 
 ![P4G Visible Rankup Ready](https://user-images.githubusercontent.com/24914353/147874021-93105f49-9ed0-41e3-a3e9-7a50ad0292c0.png)
