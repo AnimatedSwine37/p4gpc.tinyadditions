@@ -136,13 +136,15 @@ namespace p4gpc.tinyadditions
             {
                 using var thisProcess = Process.GetCurrentProcess();
                 using var scanner = new Scanner(thisProcess, thisProcess.MainModule);
-                long functionAddress = scanner.CompiledFindPattern(pattern).Offset + _baseAddress;
+                long functionAddress = scanner.CompiledFindPattern(pattern).Offset;
+                if (functionAddress < 0) throw new Exception($"Unable to find bytes with pattern {pattern}");
+                functionAddress += _baseAddress;
                 LogDebug($"Found the {functionName} address at 0x{functionAddress:X}");
                 return functionAddress;
             }
             catch (Exception exception)
             {
-                LogError($"An error occured trying to find the {functionName} function address. Not initializing. Please report this with information on the version of P4G you are running.", exception);
+                LogError($"An error occured trying to find the {functionName} function address. Not initializing. Please report this with information on the version of P4G you are running", exception);
                 return -1;
             }
         }
