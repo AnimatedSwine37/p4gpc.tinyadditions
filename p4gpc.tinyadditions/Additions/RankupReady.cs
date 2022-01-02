@@ -28,7 +28,7 @@ namespace p4gpc.tinyadditions.Additions
             _utils.Log("Initialising Visible Rankup Ready");
             long displayRankStartAddress = _utils.SigScan("F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 1C 0F B7 56 ??", "display rank start");
             long displayRankAddress = _utils.SigScan("50 E8 ?? ?? ?? ?? F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 30", "display rank");
-            long checkLvlUpAddress = _utils.SigScan("53 8B D9 B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 66 85 DB", "check if sl level up");
+            long checkLvlUpAddress = _utils.SigScan("53 ?? ?? B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 66 85 DB", "check if sl level up");
 
             if(displayRankStartAddress == -1 || displayRankAddress == -1 || checkLvlUpAddress == -1)
             {
