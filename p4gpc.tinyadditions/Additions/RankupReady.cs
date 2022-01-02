@@ -30,6 +30,12 @@ namespace p4gpc.tinyadditions.Additions
             long displayRankAddress = _utils.SigScan("50 E8 ?? ?? ?? ?? F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 30", "display rank");
             long checkLvlUpAddress = _utils.SigScan("53 8B D9 B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 66 85 DB", "check if sl level up");
 
+            if(displayRankStartAddress == -1 || displayRankAddress == -1 || checkLvlUpAddress == -1)
+            {
+                _utils.LogError("Failed to find all addresses required for Visible Rankup Ready. It will not be initialised.");
+                return;
+            }
+
             // Create a wrapper for the native CHECK_IF_SL_LVLUP function that can be called
             _checkIfSlLvlUp = _hooks.CreateWrapper<CheckIfSlLvlUp>(checkLvlUpAddress, out IntPtr checkIfLvlUpAddress);
 
