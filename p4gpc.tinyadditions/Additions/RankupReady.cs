@@ -118,7 +118,7 @@ namespace p4gpc.tinyadditions.Additions
                 $"label endCode",
             };
             _beforeDisplayRankHook = hooks.CreateAsmHook(beforeRenderFunction, displayRankAddress - 7, AsmHookBehaviour.ExecuteAfter).Activate();
-            _displayRankHook = hooks.CreateAsmHook(renderFunction, displayRankAddress, AsmHookBehaviour.ExecuteAfter).Activate();
+            _displayRankHook = hooks.CreateAsmHook(renderFunction, displayRankAddress + 1, AsmHookBehaviour.ExecuteAfter).Activate();
 
             _utils.Log("Successfully Initialised Visible Rankup Ready");
         }
@@ -147,8 +147,15 @@ namespace p4gpc.tinyadditions.Additions
         }
 
         // Checks if the current s link has already been checked so an infinite loop doesn't happen
-        private bool AlreadyChecked(int eax)
+        private bool AlreadyChecked(IntPtr slInfoAddress)
         {
+            _memory.Read(slInfoAddress + 4, out short rank);
+            // Max rank s links shouldn't check for rankup
+            if(rank >= 10)
+            {
+                _slChecked = false;
+                return true;
+            }
             _slChecked = !_slChecked; // Flip checked (if it was checked we're going to have a new one which won't be)
             return !_slChecked;
         }
@@ -207,9 +214,9 @@ namespace p4gpc.tinyadditions.Additions
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate bool CheckIfSlLvlUp(SocialLink socialLink);
 
-        [Function(Register.eax, Register.eax, StackCleanup.Callee)]
+        [Function(Register.esi, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate bool AlreadyCheckedFunction(int eax);
+        public delegate bool AlreadyCheckedFunction(IntPtr slInfoAddress);
 
         [Function(Register.esi, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
