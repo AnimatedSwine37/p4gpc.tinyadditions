@@ -25,6 +25,16 @@ Any Aemulus package can use this by creating a custom item json file in the cust
 ### Automatic Arcana Bonus On NG+
 Makes it so the player always gets the social link Arcana bonuses if they have a s.link's max rank item. If you want to see a message indicating this in game it is recommended that you also install the companion Aemulus mod available in [releases](https://github.com/AnimatedSwine37/p4gpc.tinyadditions/releases/latest) (although the companion mod only gives a visual change, the actual giving of the bonus is done by tinyadditions).
 
+### Visible Rankup Ready
+Displays a symbol next to a social link's rank in the S.Link menu indicating that they're ready to rank up if they are. This applies to every s.link except those that automatically level up during story events and Margaret. The Fox is unique as it will show as ready to rank up once you've completed the current request for it. I didn't give Margaret any custom logic as checking for a specific Persona with skills is more complicated. This addition does not apply to the social link details as of now. (Idea by alex.sh on discord)
+
+The symbol that is displayed can be chosen between 4 that I thought fit well and the x position of the symbol can also be adjusted.
+
+
+![P4G Visible Rankup Ready](https://user-images.githubusercontent.com/24914353/147874021-93105f49-9ed0-41e3-a3e9-7a50ad0292c0.png)
+![P4G Visible Rankup Symbols](https://user-images.githubusercontent.com/24914353/147874013-8d64d6cf-fd3b-46dc-9aba-4766e280e0ac.png)
+![P4G Visible Rankup Ready Positions](https://user-images.githubusercontent.com/24914353/147874275-1a37c898-10f8-4975-accd-612553a7fc12.png)
+
 ## Planned Additions
 These are features that I would like to add however, there is no guarantee that any of them every actually happen. If you want to have a crack at implementing one of these then go for it! (more info in [contributing](#contributing)) 
 
