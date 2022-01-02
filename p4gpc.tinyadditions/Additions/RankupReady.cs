@@ -185,7 +185,7 @@ namespace p4gpc.tinyadditions.Additions
         // Checks if a social link is one that can only be ranked up by story stuff
         private bool IsStorySl(SocialLink sl, short rank)
         {
-            if (sl == SocialLink.InvestigationTeam || sl == SocialLink.SeekersOfTruth || sl == SocialLink.Teddie)
+            if (sl == SocialLink.InvestigationTeam || sl == SocialLink.SeekersOfTruth || sl == SocialLink.Teddie || sl == SocialLink.Margaret)
                 return true;
             else if ((sl == SocialLink.AdachiHunger || sl == SocialLink.AdachiJester) && rank >= 6)
                 return true;
