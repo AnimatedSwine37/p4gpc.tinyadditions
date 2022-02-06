@@ -132,6 +132,10 @@ namespace p4gpc.tinyadditions
             {
                 _additions.Add(new RankupReady(_utils, _baseAddress, _config, _memory, _hooks));
             }));
+            additionInits.Add(Task.Run(() =>
+            {
+                _additions.Add(new BetterSlMenu(_utils, _baseAddress, _config, _memory, _hooks));
+            }));
             Task.WaitAll(additionInits.ToArray());
         }
 
