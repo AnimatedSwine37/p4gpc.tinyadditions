@@ -26,7 +26,8 @@ namespace p4gpc.tinyadditions.Configuration.Implementation
             _configurations = new IUpdatableConfigurable[]
             {
                 // Add more configurations here if needed.
-                Configurable<Config>.FromFile(Path.Combine(ModFolder, "Config.json"), "Default Config")
+                Configurable<Config>.FromFile(Path.Combine(ModFolder, "Config.json"), "Main Config"),
+                Configurable<PartyPanelConfig>.FromFile(Path.Combine(ModFolder, "PartyPanelConfig.json"), "Party Panel Config")
             };
 
             // Add self-updating to configurations.

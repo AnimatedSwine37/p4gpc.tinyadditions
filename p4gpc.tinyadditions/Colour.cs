@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,5 +14,10 @@ namespace p4gpc.tinyadditions
         public byte B { get; set; }
 
         public Colour(byte r, byte g, byte b) { R = r; G = g; B = b; }
+
+        public override string ToString()
+        {
+            return $"{R}, {G}, {B}";
+        }
     }
 }

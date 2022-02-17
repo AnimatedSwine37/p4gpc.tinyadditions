@@ -30,6 +30,7 @@ namespace p4gpc.tinyadditions
         /// Stores the contents of your mod's configuration. Automatically updated by template.
         /// </summary>
         private Config _configuration;
+        private PartyPanelConfig _partyPanelConfig;
 
         /// <summary>
         /// An interface to Reloaded's the function hooks/detours library.
@@ -59,11 +60,14 @@ namespace p4gpc.tinyadditions
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
 
             /* Your mod code starts here. */
+            _partyPanelConfig = configurator.GetConfiguration<PartyPanelConfig>(1);
+            _partyPanelConfig.ConfigurationUpdated += OnConfigurationUpdated;
+
             using var thisProcess = Process.GetCurrentProcess();
             int baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
             IMemory memory = new Memory();
             _utils = new Utils(_configuration, _logger, baseAddress, memory);
-            _inputs = new Inputs(_hooks, _configuration, _utils, baseAddress, memory);
+            _inputs = new Inputs(_hooks, _configuration, _partyPanelConfig, _utils, baseAddress, memory);
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)
@@ -74,11 +78,15 @@ namespace p4gpc.tinyadditions
             */
 
             // Replace configuration with new.
-            _configuration = (Config)obj;
+            if (obj.GetType() == typeof(Config))
+                _configuration = (Config)obj;
+            else if (obj.GetType() == typeof(PartyPanelConfig))
+                _partyPanelConfig = (PartyPanelConfig)obj;
+
             _utils.Log("Config Updated: Applying");
 
             // Apply settings from configuration.
-            _inputs.UpdateConfiguration(_configuration);
+            _inputs.UpdateConfiguration(_configuration, _partyPanelConfig);
             _utils.Configuration = _configuration;
         }
 

@@ -22,9 +22,39 @@ namespace p4gpc.tinyadditions.Additions
         private IReverseWrapper<SetFgColourFunction> _setFgColourReverseWrapper;
         private IReverseWrapper<SetBgColourFunction> _setBgColourReverseWrapper;
 
-        public ColouredPartyPanel(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
+        private PartyPanelConfig _partyPanelConfig;
+
+        private Colour[] _fgColours;
+        private Colour[] _bgColours;
+
+        public ColouredPartyPanel(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks, PartyPanelConfig partyPanelConfig) : base(utils, baseAddress, configuration, memory, hooks)
         {
+            _partyPanelConfig = partyPanelConfig;
+            InitColourArrays();
             InitInBtlHook();
+        }
+
+        // Initialises the arrays that store the party panel colours (so we don't do reflection 100s of times a second which presumably would be badish)
+        private void InitColourArrays()
+        {
+            List<Colour> fgColours = new List<Colour>();
+            List<Colour> bgColours = new List<Colour>();
+            foreach (PartyMember member in (PartyMember[])Enum.GetValues(typeof(PartyMember)))
+            {
+                if (member == PartyMember.Rise)
+                {
+                    // Rise doesn't have a party panel so no need for a colour
+                    fgColours.Add(null);
+                    bgColours.Add(null);
+                }
+                else
+                {
+                    fgColours.Add((Colour)_partyPanelConfig.GetType().GetProperty($"{member}FgColour").GetValue(_partyPanelConfig));
+                    bgColours.Add((Colour)_partyPanelConfig.GetType().GetProperty($"{member}BgColour").GetValue(_partyPanelConfig));
+                }
+            }
+            _fgColours = fgColours.ToArray();
+            _bgColours = bgColours.ToArray();
         }
 
         // Initialises the hook for changing colours while in battle
@@ -49,9 +79,6 @@ namespace p4gpc.tinyadditions.Additions
                 //Pop back the value from stack to xmm0
                 $"movdqu xmm0, dqword [esp]",
                 $"add esp, 16", // re-align the stack
-                //"mov byte [edi + 0x84], 210",
-                //"mov byte [edi + 0x85], 56",
-                //"mov byte [edi + 0x86], 49",
             };
             _inBtlFgHook = _hooks.CreateAsmHook(fgFunction, address - 10, AsmHookBehaviour.ExecuteAfter).Activate();
 
@@ -73,35 +100,22 @@ namespace p4gpc.tinyadditions.Additions
                 //Pop back the value from stack to xmm0
                 $"movdqu xmm0, dqword [esp]",
                 $"add esp, 16", // re-align the stack
-                //"mov byte [edi + 0x84], 168",
-                //"mov byte [edi + 0x85], 32",
-                //"mov byte [edi + 0x86], 25",
             };
             _inBtlBgHook = _hooks.CreateAsmHook(bgFunction, address - 0x96, AsmHookBehaviour.ExecuteAfter).Activate();
         }
 
         private void SetFgColour(PartyMember member, IntPtr colourAddress)
         {
-            member++; // The member ids start at 0 here but start at 1 in the enum
-            byte[] colour = null;
-            if (member == PartyMember.Yukiko)
-            {
-                colour = new byte[] { 210, 56, 49 };
-            }
-            if (colour != null)
-                _memory.SafeWrite(colourAddress + 0x84, colour);
+            Colour colour = _fgColours[(int)member];
+            byte[] colourBytes = { colour.R, colour.G, colour.B };
+            _memory.SafeWrite(colourAddress + 0x84, colourBytes);
         }
 
         private void SetBgColour(PartyMember member, IntPtr colourAddress)
         {
-            member++; // The member ids start at 0 here but start at 1 in the enum
-            byte[] colour = null;
-            if (member == PartyMember.Yukiko)
-            {
-                colour = new byte[] { 168, 32, 25 };
-            }
-            if (colour != null)
-                _memory.SafeWrite(colourAddress + 0x84, colour);
+            Colour colour = _bgColours[(int)member];
+            byte[] colourBytes = { colour.R, colour.G, colour.B };
+            _memory.SafeWrite(colourAddress + 0x84, colourBytes);
         }
 
         public override void Resume()
@@ -112,6 +126,12 @@ namespace p4gpc.tinyadditions.Additions
         public override void Suspend()
         {
             throw new NotImplementedException();
+        }
+
+        public void UpdateConfiguration(PartyPanelConfig configuration)
+        {
+            _partyPanelConfig = configuration;
+            InitColourArrays(); // Reload the colour arrays in case they were changed
         }
 
         // Function delegates
