@@ -135,6 +135,9 @@ namespace p4gpc.tinyadditions
             additionInits.Add(Task.Run(() =>
             {
                 _additions.Add(new BetterSlMenu(_utils, _baseAddress, _config, _memory, _hooks));
+            })); additionInits.Add(Task.Run(() =>
+            {
+                _additions.Add(new ColouredPartyPanel(_utils, _baseAddress, _config, _memory, _hooks));
             }));
             Task.WaitAll(additionInits.ToArray());
         }

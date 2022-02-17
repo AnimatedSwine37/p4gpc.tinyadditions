@@ -14,6 +14,18 @@ namespace p4gpc.tinyadditions
             DotBig = 436
         }
 
+        public enum PartyMember
+        {
+            Protagonist = 1,
+            Yosuke = 2,
+            Chie = 3,
+            Yukiko = 4,
+            Rise = 5,
+            Kanji = 6,
+            Naoto = 7,
+            Teddie = 8
+        }
+
         public enum SocialLink : short
         {
             Reserve,
