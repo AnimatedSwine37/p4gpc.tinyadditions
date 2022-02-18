@@ -10,7 +10,7 @@
   "ModR2RManagedDll64": "x64/p4gpc.tinyadditions.dll",
   "ModNativeDll32": "",
   "ModNativeDll64": "",
-  "ModDependencies": [ "reloaded.sharedlib.hooks" ],
+  "ModDependencies": [ "reloaded.sharedlib.hooks", "p4gpc.inputlibrary" ],
   "OptionalDependencies": null,
   "SupportedAppId": [ "p4g.exe" ]
 }

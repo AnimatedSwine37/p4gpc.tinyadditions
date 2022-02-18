@@ -1,46 +1,55 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>p4gpc.tinyadditions</RootNamespace>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<OutputType>WinExe</OutputType>
+		<RootNamespace>p4gpc.tinyadditions</RootNamespace>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <OutputPath>D:\Programs\Reloaded II\Mods\p4gpc.tinyadditions\</OutputPath>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<OutputPath>C:\Users\Bryce\Rirurin\p4g-cbt\tools\Reloaded\Mods\p4gpc.tinyadditions</OutputPath>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="ModConfig.json" />
-    <None Remove="Preview.png" />
-    <None Remove="Publish.ps1" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="ModConfig.json" />
+		<None Remove="Preview.png" />
+		<None Remove="Publish.ps1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="ModConfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="ModConfig.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Reloaded.Memory" Version="4.1.3" />
-    <PackageReference Include="Reloaded.Memory.Sigscan" Version="1.2.1" />
-    <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.10.1" />
-    <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.9.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Reloaded.Memory" Version="4.1.3" />
+		<PackageReference Include="Reloaded.Memory.Sigscan" Version="1.2.1" />
+		<PackageReference Include="Reloaded.Mod.Interfaces" Version="1.10.1" />
+		<PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.9.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="TinyAdditions.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<Reference Include="p4gpc.inputlibrary">
+			<HintPath>..\..\p4gpc.inputlibrary\p4gpc.inputlibrary\obj\Release\p4gpc.inputlibrary.dll</HintPath>
+		</Reference>
+		<Reference Include="p4gpc.inputlibrary.interfaces">
+			<HintPath>..\..\p4gpc.inputlibrary\p4gpc.inputlibrary.interfaces\obj\Release\p4gpc.inputlibrary.interfaces.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="TinyAdditions.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>
