@@ -89,5 +89,10 @@ namespace p4gpc.tinyadditions.Configuration
         [Description("How far the symbol is away from the rank number (default is 13)")]
         [Category("Addition Options")]
         public float RankupReadySymbolOffset { get; set; } = 13.0f;
+
+        [DisplayName("Colourful Party Panel")]
+        [Description("Changes the colour of the party panel. Configure the colours in the \"Colourful Party Panel\" config.")]
+        [Category("Addition")]
+        public bool ColourfulPartyPanelEnabled { get; set; } = false;
     }
 }

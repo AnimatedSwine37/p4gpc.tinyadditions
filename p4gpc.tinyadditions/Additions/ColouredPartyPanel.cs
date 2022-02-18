@@ -26,12 +26,16 @@ namespace p4gpc.tinyadditions.Additions
 
         private Colour[] _fgColours;
         private Colour[] _bgColours;
+        private Colour[] _ogFgColours;
+        private Colour[] _ogBgColours;
 
         public ColouredPartyPanel(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks, PartyPanelConfig partyPanelConfig) : base(utils, baseAddress, configuration, memory, hooks)
         {
             _partyPanelConfig = partyPanelConfig;
             InitColourArrays();
             InitInBtlHook();
+            if (!_configuration.ColourfulPartyPanelEnabled)
+                Suspend();
         }
 
         // Initialises the arrays that store the party panel colours (so we don't do reflection 100s of times a second which presumably would be badish)
@@ -53,8 +57,30 @@ namespace p4gpc.tinyadditions.Additions
                     bgColours.Add((Colour)_partyPanelConfig.GetType().GetProperty($"{member}BgColour").GetValue(_partyPanelConfig));
                 }
             }
+
+            // The og colours are used for rgb garbage since we need to keep a reference of the original value so it's nice and smooth
             _fgColours = fgColours.ToArray();
             _bgColours = bgColours.ToArray();
+
+            // Create 2 new arrays of colours (has to be done like this otherwise the new array would still reference the old colour objects)
+            fgColours.Clear();
+            bgColours.Clear();
+            for(int i = 0; i < _fgColours.Length; i++)
+            {
+                Colour fgColour = _fgColours[i];
+                if (fgColour == null)
+                {
+                    // Rise's "colour" is null
+                    fgColours.Add(null);
+                    bgColours.Add(null);
+                    continue;
+                }
+                fgColours.Add(new Colour(fgColour.R, fgColour.G, fgColour.B));
+                Colour bgColour = _bgColours[i];
+                bgColours.Add(new Colour(bgColour.R, bgColour.G, bgColour.B));
+            }
+            _ogBgColours = bgColours.ToArray();
+            _ogFgColours = fgColours.ToArray();
         }
 
         // Initialises the hook for changing colours while in battle
@@ -107,6 +133,7 @@ namespace p4gpc.tinyadditions.Additions
         private void SetFgColour(PartyMember member, IntPtr colourAddress)
         {
             Colour colour = _fgColours[(int)member];
+            DoRgbTransition(colour, _ogFgColours[(int)member]);
             byte[] colourBytes = { colour.R, colour.G, colour.B };
             _memory.SafeWrite(colourAddress + 0x84, colourBytes);
         }
@@ -114,18 +141,49 @@ namespace p4gpc.tinyadditions.Additions
         private void SetBgColour(PartyMember member, IntPtr colourAddress)
         {
             Colour colour = _bgColours[(int)member];
+            DoRgbTransition(colour, _ogBgColours[(int)member]);
             byte[] colourBytes = { colour.R, colour.G, colour.B };
             _memory.SafeWrite(colourAddress + 0x84, colourBytes);
         }
 
+        // Makes the epic rgb transition rainbow thing happen
+        private void DoRgbTransition(Colour colour, Colour transitionColour)
+        {
+            if(colour.Equals(transitionColour))
+            {
+                byte r = transitionColour.R;
+                transitionColour.R = transitionColour.G;
+                transitionColour.G = r;
+                transitionColour.B = r;
+            }
+
+            if (colour.G < transitionColour.G) colour.G++;
+            else if (colour.R > transitionColour.R) colour.R--;
+            else if (colour.B < transitionColour.B) colour.B++;
+            else if (colour.G > transitionColour.G) colour.G--;
+            else if (colour.R < transitionColour.R) colour.R++;
+            else if (colour.B > transitionColour.B) colour.B--;
+        }
+
         public override void Resume()
         {
-            throw new NotImplementedException();
+            _inBtlBgHook?.Enable();
+            _inBtlFgHook?.Enable();
         }
 
         public override void Suspend()
         {
-            throw new NotImplementedException();
+            _inBtlBgHook?.Disable();
+            _inBtlFgHook?.Disable();
+        }
+
+        public override void UpdateConfiguration(Config configuration)
+        {
+            if (_configuration.ColourfulPartyPanelEnabled && !configuration.ColourfulPartyPanelEnabled)
+                Suspend();
+            else if (!_configuration.ColourfulPartyPanelEnabled && configuration.ColourfulPartyPanelEnabled)
+                Resume();
+            base.UpdateConfiguration(configuration);
         }
 
         public void UpdateConfiguration(PartyPanelConfig configuration)

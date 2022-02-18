@@ -19,5 +19,18 @@ namespace p4gpc.tinyadditions
         {
             return $"{R}, {G}, {B}";
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj.GetType() != typeof(Colour))
+                return false;
+            Colour colour = (Colour)obj;
+            return colour.R == R && colour.G == G && colour.B == B;
+        }
+
+        public override int GetHashCode()
+        {
+            return R + G << 8+ B << 16;
+        }
     }
 }
