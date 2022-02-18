@@ -149,6 +149,8 @@ namespace p4gpc.tinyadditions.Additions
         // Makes the epic rgb transition rainbow thing happen
         private void DoRgbTransition(Colour colour, Colour transitionColour)
         {
+            if (!_partyPanelConfig.RgbMode)
+                return;
             if(colour.Equals(transitionColour))
             {
                 byte r = transitionColour.R;

@@ -10,6 +10,10 @@ namespace p4gpc.tinyadditions.Configuration
 {
     public class PartyPanelConfig: Configurable<PartyPanelConfig>
     {
+        [DisplayName("Epic Gamer RGB")]
+        [Description("Turns the party panels into something fit for a real gamer. The rgb transition is based on the set fg and bg colours so try changing them for the best effect.")]
+        public bool RgbMode { get; set; } = false;
+
         // Protag
         [DisplayName("Protagonist Foreground Colour")]
         [Description("The colour of the foreground of the Protagonist's party panel")]
