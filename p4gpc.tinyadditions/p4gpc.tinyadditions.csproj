@@ -11,7 +11,7 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-		<OutputPath>C:\Users\Bryce\Rirurin\p4g-cbt\tools\Reloaded\Mods\p4gpc.tinyadditions</OutputPath>
+		<OutputPath>D:\Programs\Reloaded II\Mods\p4gpc.tinyadditions\</OutputPath>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
