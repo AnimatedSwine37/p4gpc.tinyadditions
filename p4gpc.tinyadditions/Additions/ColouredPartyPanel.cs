@@ -18,9 +18,11 @@ namespace p4gpc.tinyadditions.Additions
     {
         private IAsmHook _inBtlFgHook;
         private IAsmHook _inBtlBgHook;
+        private IAsmHook _inBtlHpBarHook;
 
         private IReverseWrapper<SetFgColourFunction> _setFgColourReverseWrapper;
         private IReverseWrapper<SetBgColourFunction> _setBgColourReverseWrapper;
+        private IReverseWrapper<SetHpBgColourFunction> _setHpBgColourReverseWrapper;
 
         private PartyPanelConfig _partyPanelConfig;
 
@@ -28,6 +30,7 @@ namespace p4gpc.tinyadditions.Additions
         private Colour[] _bgColours;
         private Colour[] _ogFgColours;
         private Colour[] _ogBgColours;
+        private PartyMember _currentMember;
 
         public ColouredPartyPanel(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks, PartyPanelConfig partyPanelConfig) : base(utils, baseAddress, configuration, memory, hooks)
         {
@@ -65,7 +68,7 @@ namespace p4gpc.tinyadditions.Additions
             // Create 2 new arrays of colours (has to be done like this otherwise the new array would still reference the old colour objects)
             fgColours.Clear();
             bgColours.Clear();
-            for(int i = 0; i < _fgColours.Length; i++)
+            for (int i = 0; i < _fgColours.Length; i++)
             {
                 Colour fgColour = _fgColours[i];
                 if (fgColour == null)
@@ -128,6 +131,27 @@ namespace p4gpc.tinyadditions.Additions
                 $"add esp, 16", // re-align the stack
             };
             _inBtlBgHook = _hooks.CreateAsmHook(bgFunction, address - 0x96, AsmHookBehaviour.ExecuteAfter).Activate();
+
+            string[] hpBgFunction =
+            {
+                "use32",
+                // Save xmm0 (will be unintentionally altered)
+                $"sub esp, 16", // allocate space on stack
+                $"movdqu dqword [esp], xmm0",
+                // Save xmm3
+                $"sub esp, 16", // allocate space on stack
+                $"movdqu dqword [esp], xmm3",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(SetHpBgColour, out _setHpBgColourReverseWrapper)}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                //Pop back the value from stack to xmm3
+                $"movdqu xmm3, dqword [esp]",
+                $"add esp, 16", // re-align the stack
+                //Pop back the value from stack to xmm0
+                $"movdqu xmm0, dqword [esp]",
+                $"add esp, 16", // re-align the stack
+            };
+            _inBtlHpBarHook = _hooks.CreateAsmHook(hpBgFunction, address + 0x324, AsmHookBehaviour.ExecuteAfter).Activate();
         }
 
         private void SetFgColour(PartyMember member, IntPtr colourAddress)
@@ -140,8 +164,16 @@ namespace p4gpc.tinyadditions.Additions
 
         private void SetBgColour(PartyMember member, IntPtr colourAddress)
         {
+            _currentMember = member;
             Colour colour = _bgColours[(int)member];
             DoRgbTransition(colour, _ogBgColours[(int)member]);
+            byte[] colourBytes = { colour.R, colour.G, colour.B };
+            _memory.SafeWrite(colourAddress + 0x84, colourBytes);
+        }
+
+        private void SetHpBgColour(IntPtr colourAddress)
+        {
+            Colour colour = _fgColours[(int)_currentMember];
             byte[] colourBytes = { colour.R, colour.G, colour.B };
             _memory.SafeWrite(colourAddress + 0x84, colourBytes);
         }
@@ -151,7 +183,7 @@ namespace p4gpc.tinyadditions.Additions
         {
             if (!_partyPanelConfig.RgbMode)
                 return;
-            if(colour.Equals(transitionColour))
+            if (colour.Equals(transitionColour))
             {
                 byte r = transitionColour.R;
                 transitionColour.R = transitionColour.G;
@@ -202,5 +234,9 @@ namespace p4gpc.tinyadditions.Additions
         [Function(new Register[] { Register.edx, Register.edi }, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void SetBgColourFunction(PartyMember member, IntPtr colourAddress);
+
+        [Function(Register.edi, Register.eax, StackCleanup.Callee)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void SetHpBgColourFunction(IntPtr colourAddress);
     }
 }
