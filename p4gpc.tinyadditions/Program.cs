@@ -1,4 +1,5 @@
-﻿using p4gpc.tinyadditions.Configuration;
+﻿using p4gpc.inputlibrary.interfaces;
+using p4gpc.tinyadditions.Configuration;
 using p4gpc.tinyadditions.Configuration.Implementation;
 using Reloaded.Hooks.ReloadedII.Interfaces;
 using Reloaded.Memory.Sources;
@@ -30,6 +31,11 @@ namespace p4gpc.tinyadditions
         /// Stores the contents of your mod's configuration. Automatically updated by template.
         /// </summary>
         private Config _configuration;
+
+        /// <summary>
+        /// Stores a reference to the controller hook in other mod.
+        /// </summary>
+        private WeakReference<IInputHook> _inputHook;
 
         /// <summary>
         /// An interface to Reloaded's the function hooks/detours library.
@@ -64,6 +70,24 @@ namespace p4gpc.tinyadditions
             IMemory memory = new Memory();
             _utils = new Utils(_configuration, _logger, baseAddress, memory);
             _inputs = new Inputs(_hooks, _configuration, _utils, baseAddress, memory);
+            _modLoader.ModLoaded += ModLoaded;
+            SetupInput();
+        }
+
+        private void ModLoaded(IModV1 modInstance, IModConfigV1 modConfig)
+        {
+            if (modConfig.ModId == "p4gpc.inputlibrary") SetupInput();
+        }
+
+        private void SetupInput()
+        {
+            _inputHook = _modLoader.GetController<IInputHook>();
+            if (_inputHook.TryGetTarget(out var target)) target.OnInput += TargetOnInputEvent;
+        }
+
+        private void TargetOnInputEvent(int input, bool risingEdge, bool controlType)
+        {
+            _inputs.SetInputEvent(input, risingEdge, controlType);
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

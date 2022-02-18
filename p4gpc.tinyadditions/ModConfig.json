@@ -2,7 +2,7 @@
   "ModId": "p4gpc.tinyadditions",
   "ModName": "Persona 4 Golden Tiny Additions",
   "ModAuthor": "AnimatedSwine37, BulbyVR, Rirurin",
-  "ModVersion": "1.1.0",
+  "ModVersion": "1.2.0",
   "ModDescription": "Various small additions for Persona 4 Golden",
   "ModDll": "p4gpc.tinyadditions.dll",
   "ModIcon": "TinyAdditions.png",
@@ -10,7 +10,7 @@
   "ModR2RManagedDll64": "x64/p4gpc.tinyadditions.dll",
   "ModNativeDll32": "",
   "ModNativeDll64": "",
-  "ModDependencies": [ "reloaded.sharedlib.hooks" ],
+  "ModDependencies": [ "reloaded.sharedlib.hooks", "p4gpc.inputlibrary" ],
   "OptionalDependencies": null,
   "SupportedAppId": [ "p4g.exe" ]
 }
