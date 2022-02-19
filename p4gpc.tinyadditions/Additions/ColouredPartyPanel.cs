@@ -19,10 +19,12 @@ namespace p4gpc.tinyadditions.Additions
         private IAsmHook _inBtlFgHook;
         private IAsmHook _inBtlBgHook;
         private IAsmHook _inBtlHpBarHook;
+        private IAsmHook _commandCircleHook;
 
         private IReverseWrapper<SetFgColourFunction> _setFgColourReverseWrapper;
         private IReverseWrapper<SetBgColourFunction> _setBgColourReverseWrapper;
         private IReverseWrapper<SetHpBgColourFunction> _setHpBgColourReverseWrapper;
+        private IReverseWrapper<SetCommandCircleColourFunction> _setCommandCircleColourReverseWrapper;
 
         private PartyPanelConfig _partyPanelConfig;
 
@@ -37,6 +39,7 @@ namespace p4gpc.tinyadditions.Additions
             _partyPanelConfig = partyPanelConfig;
             InitColourArrays();
             InitInBtlHook();
+            InitCommandCircleHook();
             if (!_configuration.ColourfulPartyPanelEnabled)
                 Suspend();
         }
@@ -142,7 +145,7 @@ namespace p4gpc.tinyadditions.Additions
                 $"sub esp, 16", // allocate space on stack
                 $"movdqu dqword [esp], xmm3",
                 $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(SetHpBgColour, out _setHpBgColourReverseWrapper)}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(SetHpOutlineColour, out _setHpBgColourReverseWrapper)}",
                 $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 //Pop back the value from stack to xmm3
                 $"movdqu xmm3, dqword [esp]",
@@ -152,6 +155,33 @@ namespace p4gpc.tinyadditions.Additions
                 $"add esp, 16", // re-align the stack
             };
             _inBtlHpBarHook = _hooks.CreateAsmHook(hpBgFunction, address + 0x324, AsmHookBehaviour.ExecuteAfter).Activate();
+        }
+
+        // Initialise the hook for changing the colour of the "command" circle that displays next to the active character in battle
+        private void InitCommandCircleHook()
+        {
+            long address = _utils.SigScan("E8 ?? ?? ?? ?? 83 C4 08 66 C7 87 ?? ?? ?? ?? FF FF C6 87 ?? ?? ?? ?? FF C6 47 ?? 00 5F 5E 5B", "command circle");
+
+            string[] function = 
+            {
+                "use32",
+                // Save xmm0 (will be unintentionally altered)
+                $"sub esp, 16", // allocate space on stack
+                $"movdqu dqword [esp], xmm0",
+                // Save xmm3
+                $"sub esp, 16", // allocate space on stack
+                $"movdqu dqword [esp], xmm3",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(SetCommandCircleColour, out _setCommandCircleColourReverseWrapper)}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                //Pop back the value from stack to xmm3
+                $"movdqu xmm3, dqword [esp]",
+                $"add esp, 16", // re-align the stack
+                //Pop back the value from stack to xmm0
+                $"movdqu xmm0, dqword [esp]",
+                $"add esp, 16", // re-align the stack
+            };
+            _commandCircleHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         private void SetFgColour(PartyMember member, IntPtr colourAddress)
@@ -171,9 +201,16 @@ namespace p4gpc.tinyadditions.Additions
             _memory.SafeWrite(colourAddress + 0x84, colourBytes);
         }
 
-        private void SetHpBgColour(IntPtr colourAddress)
+        private void SetHpOutlineColour(IntPtr colourAddress)
         {
             Colour colour = _fgColours[(int)_currentMember];
+            byte[] colourBytes = { colour.R, colour.G, colour.B };
+            _memory.SafeWrite(colourAddress + 0x84, colourBytes);
+        }
+
+        private void SetCommandCircleColour(IntPtr colourAddress)
+        {
+            Colour colour = _bgColours[(int)_currentMember];
             byte[] colourBytes = { colour.R, colour.G, colour.B };
             _memory.SafeWrite(colourAddress + 0x84, colourBytes);
         }
@@ -203,12 +240,16 @@ namespace p4gpc.tinyadditions.Additions
         {
             _inBtlBgHook?.Enable();
             _inBtlFgHook?.Enable();
+            _inBtlHpBarHook?.Enable();
+            _commandCircleHook?.Enable();
         }
 
         public override void Suspend()
         {
             _inBtlBgHook?.Disable();
             _inBtlFgHook?.Disable();
+            _inBtlHpBarHook?.Disable();
+            _commandCircleHook?.Disable();
         }
 
         public override void UpdateConfiguration(Config configuration)
@@ -238,5 +279,9 @@ namespace p4gpc.tinyadditions.Additions
         [Function(Register.edi, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void SetHpBgColourFunction(IntPtr colourAddress);
+
+        [Function(Register.edi, Register.eax, StackCleanup.Callee)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void SetCommandCircleColourFunction(IntPtr colourAddress);
     }
 }
