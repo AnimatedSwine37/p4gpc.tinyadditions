@@ -29,14 +29,12 @@ namespace p4gpc.tinyadditions
         // Functionalities
         private AutoAdvanceToggle _autoAdvanceToggle;
         private Sprint _sprint;
-        private ColouredPartyPanel _colouredPartyPanel;
         private List<Addition> _additions = new List<Addition>();
 
         // Current mod configuration
         private Config _config { get; set; }
-        private PartyPanelConfig _partyPanelConfig { get; set; }
         private Utils _utils;
-        public Inputs(IReloadedHooks hooks, Config configuration, PartyPanelConfig partyPanelConfig, Utils utils, int baseAddress, IMemory memory)
+        public Inputs(IReloadedHooks hooks, Config configuration, Utils utils, int baseAddress, IMemory memory)
         {
             // Initialise private variables
             _config = configuration;
@@ -44,7 +42,6 @@ namespace p4gpc.tinyadditions
             _memory = memory;
             _utils = utils;
             _baseAddress = baseAddress;
-            _partyPanelConfig = partyPanelConfig;
 
             _utils.Log("Initialise Additions");
 
@@ -80,23 +77,9 @@ namespace p4gpc.tinyadditions
             {
                 _additions.Add(new BetterSlMenu(_utils, _baseAddress, _config, _memory, _hooks));
             })); 
-            additionInits.Add(Task.Run(() =>
-            {
-                _colouredPartyPanel = new ColouredPartyPanel(_utils, _baseAddress, _config, _memory, _hooks, _partyPanelConfig);
-                _additions.Add(_colouredPartyPanel);
-            }));
             Task.WaitAll(additionInits.ToArray());
         }
-
-        public void UpdateConfiguration(Config configuration, PartyPanelConfig partyPanelConfig)
-        {
-            _config = configuration;
-            _partyPanelConfig = partyPanelConfig;
-            foreach (Addition addition in _additions)
-                addition.UpdateConfiguration(configuration);
-            _colouredPartyPanel.UpdateConfiguration(partyPanelConfig);
-        }
-
+        
         // Do stuff with the inputs
         private bool[] sprintPressed = { false, false };
         public void SetInputEvent(int input, bool risingEdge, bool keyboard)
