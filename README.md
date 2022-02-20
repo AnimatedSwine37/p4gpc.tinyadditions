@@ -35,11 +35,11 @@ The symbol that is displayed can be chosen between 4 that I thought fit well and
 ![P4G Visible Rankup Symbols](https://user-images.githubusercontent.com/24914353/147874013-8d64d6cf-fd3b-46dc-9aba-4766e280e0ac.png)
 ![P4G Visible Rankup Ready Positions](https://user-images.githubusercontent.com/24914353/147874275-1a37c898-10f8-4975-accd-612553a7fc12.png)
 
+### Fixed SL Menu
+Makes it so the S.Link menu correctly shows S.Links that are both maxed and reversed or broken. As there is normally no way to break or reverse a maxed link the game normally displays it incorrectly. This is a background addition and as such is always enabled and won't actually make a difference to your game unless you are using a mod that takes advantage of it (none are out yet).
+
 ## Planned Additions
 These are features that I would like to add however, there is no guarantee that any of them every actually happen. If you want to have a crack at implementing one of these then go for it! (more info in [contributing](#contributing)) 
-
-### Input Reading/Writing Library
-This is not actually an addition but a splitting of the input reading capabilities of tinyadditions into their own Reloaded mod which would act as a library which any other mods could use to easily read and write inputs to the game.
 
 ### Sprint Animation
 Make the player have a unique animation when they sprint so it is clear when you are and aren't sprinting.
