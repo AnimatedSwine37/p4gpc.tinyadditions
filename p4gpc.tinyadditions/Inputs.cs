@@ -31,6 +31,8 @@ namespace p4gpc.tinyadditions
         private Sprint _sprint;
         private List<Addition> _additions = new List<Addition>();
 
+        private bool _itemLocationInitialised = false;
+
         // Current mod configuration
         private Config _config { get; set; }
         private Utils _utils;
@@ -84,6 +86,12 @@ namespace p4gpc.tinyadditions
         private bool[] sprintPressed = { false, false };
         public void SetInputEvent(int input, bool risingEdge, bool keyboard)
         {
+            if(!_itemLocationInitialised)
+            {
+                _utils.InitialiseItemLocation();
+                _itemLocationInitialised = true;
+            }
+
             // sprint code
             if (_config.SprintEnabled)
             {
