@@ -44,34 +44,47 @@ namespace p4gpc.tinyadditions
         /// </summary>
         private IReloadedHooks _hooks;
 
+        /// <summary>
+        /// Configuration of the current mod.
+        /// </summary>
+        private IModConfig _modConfig = null!;
+
         private Inputs _inputs;
         private Utils _utils;
 
         /// <summary>
         /// Entry point for your mod.
         /// </summary>
-        public void Start(IModLoaderV1 loader)
+        public void StartEx(IModLoaderV1 loaderApi, IModConfigV1 modConfig)
         {
-            //Debugger.Launch();
-            _modLoader = (IModLoader)loader;
+#if DEBUG
+        // Attaches debugger in debug mode; ignored in release.
+        Debugger.Launch();
+#endif
+
+            _modLoader = (IModLoader)loaderApi;
+            _modConfig = (IModConfig)modConfig;
             _logger = (ILogger)_modLoader.GetLogger();
-            _modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks);
+            _modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks!);
 
             // Your config file is in Config.json.
             // Need a different name, format or more configurations? Modify the `Configurator`.
             // If you do not want a config, remove Configuration folder and Config class.
-            var configurator = new Configurator(_modLoader.GetDirectoryForModId(MyModId));
+            var configurator = new Configurator(_modLoader.GetModConfigDirectory(_modConfig.ModId));
+            configurator.Migrate(_modLoader.GetDirectoryForModId(_modConfig.ModId), configurator.ConfigFolder);
             _configuration = configurator.GetConfiguration<Config>(0);
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
 
-            /* Your mod code starts here. */
+            /*
+                Your mod code starts below.
+                Visit https://github.com/Reloaded-Project for additional optional libraries.
+            */
             using var thisProcess = Process.GetCurrentProcess();
             int baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
             IMemory memory = new Memory();
             _utils = new Utils(_configuration, _logger, baseAddress, memory);
             _inputs = new Inputs(_hooks, _configuration, _utils, baseAddress, memory);
             _modLoader.ModLoaded += ModLoaded;
-            SetupInput();
         }
 
         private void ModLoaded(IModV1 modInstance, IModConfigV1 modConfig)
@@ -131,18 +144,5 @@ namespace p4gpc.tinyadditions
 
         /* Automatically called by the mod loader when the mod is about to be unloaded. */
         public Action Disposing { get; }
-
-        /* Contains the Types you would like to share with other mods.
-           If you do not want to share any types, please remove this method and the
-           IExports interface.
-        
-           Inter Mod Communication: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/InterModCommunication.md
-        */
-        public Type[] GetTypes() => new Type[0];
-
-        /* This is a dummy for R2R (ReadyToRun) deployment.
-           For more details see: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/ReadyToRun.md
-        */
-        public static void Main() { }
     }
 }

@@ -3,17 +3,24 @@ using System.IO;
 
 namespace p4gpc.tinyadditions.Configuration.Implementation
 {
-    public class Configurator : IConfigurator
+    public class Configurator : IConfiguratorV2
     {
-        /* For latest documentation:
-            - See the interface! (Go To Definition) or if not available
-            - Google the Source Code!
+        /* Migration Guide from V1 to V2:
+            - Copy this class to your V1 mod; re-add any changes made to `MakeConfigurations`.
+            - Add Migrate function; it should use File.Move to copy config files from old to new directory.
+            - In Program.cs Start function, add a call to `Migrate` before calling `GetConfiguration`.
+                configurator.Migrate(_modLoader.GetDirectoryForModId(_modConfig.ModId), configurator.ConfigFolder);
         */
 
         /// <summary>
-        /// Full path to the mod folder.
+        /// The folder where the modification files are stored.
         /// </summary>
         public string ModFolder { get; private set; }
+
+        /// <summary>
+        /// Full path to the config folder.
+        /// </summary>
+        public string ConfigFolder { get; private set; }
 
         /// <summary>
         /// Returns a list of configurations.
@@ -26,7 +33,7 @@ namespace p4gpc.tinyadditions.Configuration.Implementation
             _configurations = new IUpdatableConfigurable[]
             {
                 // Add more configurations here if needed.
-                Configurable<Config>.FromFile(Path.Combine(ModFolder, "Config.json"), "Main Config"),
+                Configurable<Config>.FromFile(Path.Combine(ConfigFolder, "Config.json"), "Default Config")
             };
 
             // Add self-updating to configurations.
@@ -43,9 +50,36 @@ namespace p4gpc.tinyadditions.Configuration.Implementation
         }
 
         public Configurator() { }
-        public Configurator(string modDirectory) : this()
+        public Configurator(string configDirectory) : this()
         {
-            ModFolder = modDirectory;
+            ConfigFolder = configDirectory;
+        }
+
+        /* Configurator V2 */
+
+        /// <summary>
+        /// Migrates from the old config location to the newer config location.
+        /// </summary>
+        /// <param name="oldDirectory">Old directory containing the mod configs.</param>
+        /// <param name="newDirectory">New directory pointing to user config folder.</param>
+        public void Migrate(string oldDirectory, string newDirectory)
+        {
+            // Delete old mod folders
+            if (Directory.Exists(Path.Combine(oldDirectory, "x86")))
+                Directory.Delete(Path.Combine(oldDirectory, "x86"), true);
+
+            if (Directory.Exists(Path.Combine(oldDirectory, "x64")))
+                Directory.Delete(Path.Combine(oldDirectory, "x64"), true);
+
+            // Move old config to new directory
+            if (File.Exists(Path.Combine(oldDirectory, "Config.json")))
+            {
+                File.Move(Path.Combine(oldDirectory, "Config.json"), Path.Combine(newDirectory, "Config.json"));
+            }
+            /*
+                To be implemented by mod author migrating from older to newer config directory.
+                Simply File.Move the config files in `MakeConfigurations` from old to new directory.
+            */
         }
 
         /* Configurator */
@@ -58,9 +92,9 @@ namespace p4gpc.tinyadditions.Configuration.Implementation
         /* IConfigurator. */
 
         /// <summary>
-        /// Sets the mod directory for the Configurator.
+        /// Sets the config directory for the Configurator.
         /// </summary>
-        public void SetModDirectory(string modDirectory) => ModFolder = modDirectory;
+        public void SetConfigDirectory(string configDirectory) => ConfigFolder = configDirectory;
 
         /// <summary>
         /// Returns a list of user configurations.
@@ -72,5 +106,10 @@ namespace p4gpc.tinyadditions.Configuration.Implementation
         /// If you have your own configuration program/code, run that code here and return true, else return false.
         /// </summary>
         public bool TryRunCustomConfiguration() => false;
+
+        /// <summary>
+        /// Sets the mod directory for the Configurator.
+        /// </summary>
+        public void SetModDirectory(string modDirectory) { ModFolder = modDirectory; }
     }
 }
