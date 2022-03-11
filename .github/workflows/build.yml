@@ -25,4 +25,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
        name: tiny-additions-build
-       path: "./p4gpc.tinyadditions/Publish/p4gpc.tinyadditions.zip"   
+       path: "./p4gpc.tinyadditions/Publish/ToUpload"   
