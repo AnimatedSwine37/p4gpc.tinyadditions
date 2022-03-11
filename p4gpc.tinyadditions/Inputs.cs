@@ -78,15 +78,19 @@ namespace p4gpc.tinyadditions
             additionInits.Add(Task.Run(() =>
             {
                 _additions.Add(new BetterSlMenu(_utils, _baseAddress, _config, _memory, _hooks));
-            })); 
+            }));
+            additionInits.Add(Task.Run(() =>
+            {
+                _additions.Add(new PersistentBGM(_utils, _baseAddress, _config, _memory, _hooks));
+            }));
             Task.WaitAll(additionInits.ToArray());
         }
-        
+
         // Do stuff with the inputs
         private bool[] sprintPressed = { false, false };
         public void SetInputEvent(int input, bool risingEdge, bool keyboard)
         {
-            if(!_itemLocationInitialised)
+            if (!_itemLocationInitialised)
             {
                 _utils.InitialiseItemLocation();
                 _itemLocationInitialised = true;
