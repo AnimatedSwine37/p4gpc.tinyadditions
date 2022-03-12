@@ -92,7 +92,10 @@ namespace p4gpc.tinyadditions
         {
             if (!_itemLocationInitialised)
             {
-                _utils.InitialiseItemLocation();
+                Task.Run(() =>
+                {
+                    _utils.InitialiseItemLocation();
+                });
                 _itemLocationInitialised = true;
             }
 

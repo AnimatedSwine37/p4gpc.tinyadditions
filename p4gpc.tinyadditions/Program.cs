@@ -85,6 +85,7 @@ namespace p4gpc.tinyadditions
             _utils = new Utils(_configuration, _logger, baseAddress, memory);
             _inputs = new Inputs(_hooks, _configuration, _utils, baseAddress, memory);
             _modLoader.ModLoaded += ModLoaded;
+            SetupInput();
         }
 
         private void ModLoaded(IModV1 modInstance, IModConfigV1 modConfig)
