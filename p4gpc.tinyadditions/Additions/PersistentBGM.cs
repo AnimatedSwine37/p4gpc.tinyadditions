@@ -1,4 +1,4 @@
-﻿using p4gpc.tinyadditions.Configuration;
+using p4gpc.tinyadditions.Configuration;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.X86;
@@ -60,7 +60,7 @@ namespace p4gpc.tinyadditions.Additions
         /// </summary>
         private void InitBgmEndHook()
         {
-            long address = _utils.SigScan("53 8B D9 B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 6B F3 70", "bgm end");
+            long address = _utils.SigScan("53 ?? ?? B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 6B F3 70", "bgm end");
             string[] function =
             {
                 "use32",
@@ -169,7 +169,7 @@ namespace p4gpc.tinyadditions.Additions
         /// </summary>
         private void InitBattleEndingHook()
         {
-            long address = _utils.SigScan("BA 07 00 00 00 33 C9 E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??", "battle ending");
+            long address = _utils.SigScan("BA 07 00 00 00 ?? C9 E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??", "battle ending");
             string[] function =
             {
                 "use32",
