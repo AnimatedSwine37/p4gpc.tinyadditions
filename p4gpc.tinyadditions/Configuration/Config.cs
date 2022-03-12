@@ -89,5 +89,10 @@ namespace p4gpc.tinyadditions.Configuration
         [Description("How far the symbol is away from the rank number (default is 13)")]
         [Category("Addition Options")]
         public float RankupReadySymbolOffset { get; set; } = 13.0f;
+
+        [DisplayName("Persistent Dungeon BGM")]
+        [Description("Makes it so dungeon BGM doesn't switch to the battle BGM when entering a battle (excluding boss battles).")]
+        [Category("Addition")]
+        public bool PersistentBgmEnabled { get; set; } = false;
     }
 }

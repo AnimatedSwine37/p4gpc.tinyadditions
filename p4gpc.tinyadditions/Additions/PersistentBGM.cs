@@ -42,12 +42,14 @@ namespace p4gpc.tinyadditions.Additions
 
         public override void Resume()
         {
-            throw new NotImplementedException();
+            foreach (var hook in _hooksList)
+                hook.Enable();
         }
 
         public override void Suspend()
         {
-            throw new NotImplementedException();
+            foreach (var hook in _hooksList)
+                hook.Disable();
         }
 
         /// <summary>
@@ -87,6 +89,8 @@ namespace p4gpc.tinyadditions.Additions
                 $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
             _bgmEndHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            if (!_configuration.PersistentBgmEnabled)
+                _bgmEndHook.Disable();
         }
 
         /// <summary>
@@ -110,6 +114,8 @@ namespace p4gpc.tinyadditions.Additions
                 $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
             _bgmStartHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            if (!_configuration.PersistentBgmEnabled)
+                _bgmStartHook.Disable();
         }
 
         /// <summary>
@@ -117,24 +123,15 @@ namespace p4gpc.tinyadditions.Additions
         /// </summary>
         private void InitBattleStartingHook()
         {
-            //long address = _utils.SigScan("33 C9 E8 ?? ?? ?? ?? F3 0F 10 05 ?? ?? ?? ??", "battle starting");
             long address = _utils.SigScan("E8 ?? ?? ?? ?? C7 47 ?? 05 00 00 00 E9 ?? ?? ?? ?? A1 ?? ?? ?? ??", "battle starting");
             string[] function =
             {
                 "use32",
-                //"cmp ecx, 4",
-                //"je battleStarting",
-                //"cmp ecx, 5",
-                //"je battleStarting",
-                //// A battle isn't starting (the player just swung their sword or something)
-                //$"mov byte [{_battleStarting}], 0",
-                //"jmp endHook",
-                //// A battle is starting
-                //"label battleStarting",
                 $"mov byte [{_skipBgmChange}], 1",
-                //"label endHook"
             };
             _battleStartingHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteAfter).Activate();
+            if (!_configuration.PersistentBgmEnabled)
+                _battleStartingHook.Disable();
         }
 
         /// <summary>
@@ -150,6 +147,8 @@ namespace p4gpc.tinyadditions.Additions
                 $"mov byte [{_skipBgmChange}], 0"
             };
             _battleStartedHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteAfter).Activate();
+            if (!_configuration.PersistentBgmEnabled)
+                _battleStartedHook.Disable();
         }
 
         /// <summary>
@@ -173,6 +172,8 @@ namespace p4gpc.tinyadditions.Additions
                 $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
             _bgmFadeHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            if (!_configuration.PersistentBgmEnabled)
+                _bgmFadeHook.Disable();
         }
 
         /// <summary>
@@ -189,6 +190,8 @@ namespace p4gpc.tinyadditions.Additions
                 $"{_hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)(address + 18), false)}",
             };
             _battleEndingHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            if (!_configuration.PersistentBgmEnabled)
+                _battleEndingHook.Disable();
         }
 
         /// <summary>
@@ -212,7 +215,9 @@ namespace p4gpc.tinyadditions.Additions
                 "cmp eax, eax",
                 "label endHook"
             };
-            _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            _battleEndedHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            if (!_configuration.PersistentBgmEnabled)
+                _battleEndedHook.Disable();
         }
 
         /// <summary>
@@ -223,10 +228,18 @@ namespace p4gpc.tinyadditions.Additions
         {
             _memory.Read(_skipBgmChange, out bool battleStarting);
             // If in dungeon don't switch bgm
-            //if (_utils.CheckFlag(3075))
             if (battleStarting)
                 return false;
             return true;
+        }
+
+        public override void UpdateConfiguration(Config configuration)
+        {
+            if (_configuration.PersistentBgmEnabled && !configuration.PersistentBgmEnabled)
+                Suspend();
+            else if (!_configuration.PersistentBgmEnabled && configuration.PersistentBgmEnabled)
+                Resume();
+            base.UpdateConfiguration(configuration);
         }
 
         // Function delegates
