@@ -248,5 +248,15 @@ namespace p4gpc.tinyadditions
             }
             array[0] = newItem;
         }
+
+        /// <summary>
+        /// Runs a function asynchronously
+        /// A cleaner way to do a task.run on a sing function
+        /// </summary>
+        /// <param name="action">The paramaterless void returning function to run</param>
+        public void RunAsync(Action action)
+        {
+            Task.Run(() => action());
+        }
     }
 }
