@@ -1,4 +1,4 @@
-using p4gpc.tinyadditions.Configuration;
+﻿using p4gpc.tinyadditions.Configuration;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.X86;
@@ -23,6 +23,8 @@ namespace p4gpc.tinyadditions.Additions
         private IAsmHook _battleStartedHook;
         private IAsmHook _bgmFadeHook;
         private IAsmHook _battleEndingHook;
+        private IAsmHook _battleEndedHook;
+        private List<IAsmHook> _hooksList;
 
         private string _shouldSwitchBgmCall;
 
@@ -35,14 +37,7 @@ namespace p4gpc.tinyadditions.Additions
             _memory.Write(_skipBgmChange, false);
             _battleEnding = _memory.Allocate(1);
             _memory.Write(_battleEnding, false);
-            _shouldSwitchBgmCall = _hooks.Utilities.GetAbsoluteCallMnemonics(ShouldSwitchBgm, out _shouldSwitchBgmReverseWrapper);
-            InitBattleStartingHook();
-            InitBgmEndHook();
-            InitBgmStartHook();
-            InitBgmFadeHook();
-            InitBattleStartedHook();
-            InitBattleEndingHook();
-            InitBattleEndedHook();
+            InitialiseHooks();
         }
 
         public override void Resume()
@@ -53,6 +48,22 @@ namespace p4gpc.tinyadditions.Additions
         public override void Suspend()
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Initialises all of the hooks and adds them to a list of hooks
+        /// </summary>
+        private void InitialiseHooks()
+        {
+            _shouldSwitchBgmCall = _hooks.Utilities.GetAbsoluteCallMnemonics(ShouldSwitchBgm, out _shouldSwitchBgmReverseWrapper);
+            _utils.RunAsync(InitBattleStartingHook);
+            _utils.RunAsync(InitBgmEndHook);
+            _utils.RunAsync(InitBgmStartHook);
+            _utils.RunAsync(InitBgmFadeHook);
+            _utils.RunAsync(InitBattleStartedHook);
+            _utils.RunAsync(InitBattleEndingHook);
+            _utils.RunAsync(InitBattleEndedHook);
+            _hooksList = new List<IAsmHook> { _bgmStartHook, _bgmEndHook, _bgmFadeHook, _battleStartedHook, _battleStartingHook, _battleEndingHook, _battleEndedHook };
         }
 
         /// <summary>
