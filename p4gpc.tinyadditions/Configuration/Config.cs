@@ -94,5 +94,51 @@ namespace p4gpc.tinyadditions.Configuration
         [Description("Makes it so dungeon BGM doesn't switch to the battle BGM when entering a battle (excluding boss battles).")]
         [Category("Addition")]
         public bool PersistentBgmEnabled { get; set; } = false;
+
+        // Persistent bgm stuff
+        [DisplayName("Castle Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float CastleNormalChance { get; set; } = 1;
+
+        [DisplayName("Bathhouse Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float BathhouseNormalChance { get; set; } = 1;
+
+        [DisplayName("Striptease Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float StripteaseNormalChance { get; set; } = 1;
+
+        [DisplayName("Void Quest Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float VoidQuestNormalChance { get; set; } = 1;
+
+        [DisplayName("Secret Lab Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float LabNormalChance { get; set; } = 1;
+
+        [DisplayName("Heaven Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float HeavenNormalChance { get; set; } = 1;
+
+        [DisplayName("Magatsu Inaba Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float MagatsuInabaNormalChance { get; set; } = 1;
+
+        [DisplayName("Hollow Forest Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float HollowForestNormalChance { get; set; } = 1;
+
+        [DisplayName("Yomotsu Hirasaka Normal BGM Chance")]
+        [Description("The chance that the normal battle bgm is played from 0-1 with 0 meaning the dungeon bgm always persists and 1 meaning the dungeon bgm never persists (like vanilla).")]
+        [Category("Persistent BGM Options")]
+        public float YomotsuHirasakaNormalChance { get; set; } = 1;
     }
 }
