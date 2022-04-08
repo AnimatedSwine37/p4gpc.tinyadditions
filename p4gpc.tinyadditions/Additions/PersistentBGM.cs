@@ -156,25 +156,31 @@ namespace p4gpc.tinyadditions.Additions
         /// <returns>True if we should switch it, false if the current bgm should persist</returns>
         private bool ShouldSwitchBgm(int eax)
         {
-            _memory.Write(_shouldSwitchBgm, false);
-            return false;
             int floorId = _getFloorId();
             Dungeon? dungeon = _dungeons.FirstOrDefault(x => floorId > x.StartFloor && floorId <= x.EndFloor);
             
             // We're not in a known dungeon so just let the music through
             if (dungeon == null)
+            {
+                _memory.Write(_shouldSwitchBgm, true);
                 return true;
+            }
 
             _utils.LogDebug($"The floor id is {floorId} in the dungeon {dungeon.Name}");
 
             Random random = new Random();
             double randomNum = random.NextDouble();
             float normalChance = (float)_configuration.GetType().GetProperty($"{dungeon.Name}NormalChance")!.GetValue(_configuration)!;
+            bool switchBgm;
             // We should let the bgm persist
             if(randomNum > normalChance)
-                return false;
+                switchBgm = false;
             // Let the bgm change
-            return true;
+            else
+                switchBgm = true;
+
+            _memory.Write(_shouldSwitchBgm, switchBgm);
+            return switchBgm;
         }
 
 
