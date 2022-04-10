@@ -5,8 +5,11 @@ using Reloaded.Mod.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using p4gpc.tinyadditions.Utilities;
 
 namespace p4gpc.tinyadditions
 {
@@ -20,31 +23,24 @@ namespace p4gpc.tinyadditions
         private IntPtr _eventLocation;
         private IntPtr _inMenuLocation;
         private IntPtr _itemLocation;
+        private string _exeHash;
+        private InternalConfig _internalConfig;
 
-        public Utils(Config configuration, ILogger logger, int baseAddress, IMemory memory)
+        public Utils(Config configuration, ILogger logger, int baseAddress, IMemory memory, InternalConfig internalConfig)
         {
             // Initialise fields
+            _internalConfig = internalConfig;
             Configuration = configuration;
             _logger = logger;
             _baseAddress = baseAddress;
             _memory = memory;
 
-            // Initialise locations
-            List<Task> locationInits = new List<Task>();
-            locationInits.Add(Task.Run(() =>
-            {
-                InitLocation("flag", "68 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 83 C4 0C 81 C6 40 03 00 00", 1, out _flagLocation);
-            }));
-            locationInits.Add(Task.Run(() =>
-            {
-                InitLocation("event", "A3 ?? ?? ?? ?? 8B 85 ?? ?? ?? ?? 66 89 0D ?? ?? ?? ??", 1, out _eventLocation);
-            }));
+            InitialiseExeHash();
 
-            locationInits.Add(Task.Run(() =>
-            {
-                InitLocation("in menu", "89 3D ?? ?? ?? ?? 89 1D ?? ?? ?? ?? A3 ?? ?? ?? ??", 2, out _inMenuLocation);
-            }));
-            Task.WaitAll(locationInits.ToArray());
+            // Initialise locations
+            InitLocation("flag", "68 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 83 C4 0C 81 C6 40 03 00 00", 1, out _flagLocation);
+            InitLocation("event", "A3 ?? ?? ?? ?? 8B 85 ?? ?? ?? ?? 66 89 0D ?? ?? ?? ??", 1, out _eventLocation);
+            InitLocation("in menu", "89 3D ?? ?? ?? ?? 89 1D ?? ?? ?? ?? A3 ?? ?? ?? ??", 2, out _inMenuLocation);
         }
 
         // Initialise the location to something in memory by sig scanning for a pointer
@@ -129,9 +125,50 @@ namespace p4gpc.tinyadditions
             _logger.WriteLine($"[TinyAdditions] {message}", System.Drawing.Color.Red);
         }
 
+        /// <summary>
+        /// Sets up a hash of the exe
+        /// </summary>
+        private void InitialiseExeHash()
+        {
+            if (!File.Exists("P4G.exe"))
+            {
+                _exeHash = "file not found :(";
+                return;
+            }
+            byte[] exeBytes = File.ReadAllBytes("P4G.exe");
+            byte[] hashBytes = new MD5CryptoServiceProvider().ComputeHash(exeBytes);
+            _exeHash = ByteArrayToString(hashBytes);
+            LogDebug($"The P4G.exe hash is {_exeHash}");
+        }
+
+        /// <summary>
+        /// Converts an array of bytes to a string 
+        /// ("borrowed" from visual studio docs https://docs.microsoft.com/en-us/troubleshoot/developer/visualstudio/csharp/general/compute-hash-values)
+        /// </summary>
+        /// <param name="arrInput">The array of bytes to convert</param>
+        /// <returns>A string representing the bytes in hexadecimal form</returns>
+        private string ByteArrayToString(byte[] arrInput)
+        {
+            int i;
+            StringBuilder sOutput = new StringBuilder(arrInput.Length);
+            for (i = 0; i < arrInput.Length; i++)
+            {
+                sOutput.Append(arrInput[i].ToString("X2"));
+            }
+            return sOutput.ToString();
+        }
+
+
         // Signature Scans for a location in memory, returning -1 if the scan fails otherwise the address
         public long SigScan(string pattern, string functionName)
         {
+            var previousResult = _internalConfig.SigScanResults.Find(x => x.Function == functionName);
+            if (previousResult != null)
+            {
+                // Use the previous result if all of the conditions were the same as now
+                if (previousResult.WasSuccessful && previousResult.Pattern == pattern && previousResult.ExeHash == _exeHash)
+                    return previousResult.Address;
+            }
             try
             {
                 using var thisProcess = Process.GetCurrentProcess();
@@ -140,10 +177,36 @@ namespace p4gpc.tinyadditions
                 if (functionAddress < 0) throw new Exception($"Unable to find bytes with pattern {pattern}");
                 functionAddress += _baseAddress;
                 LogDebug($"Found the {functionName} address at 0x{functionAddress:X}");
+                // Document the result
+                if (previousResult != null)
+                {
+                    previousResult.Address = functionAddress;
+                    previousResult.Pattern = pattern;
+                    previousResult.WasSuccessful = true;
+                    previousResult.ExeHash = _exeHash;
+                }
+                else
+                {
+                    _internalConfig.SigScanResults.Add(new SigScanResults(functionName, pattern, _exeHash, true, functionAddress));
+                }
+                _internalConfig.Save();
                 return functionAddress;
             }
             catch (Exception exception)
             {
+                // Document the result
+                if (previousResult != null)
+                {
+                    previousResult.Address = -1;
+                    previousResult.Pattern = pattern;
+                    previousResult.WasSuccessful = false;
+                    previousResult.ExeHash = _exeHash;
+                }
+                else
+                {
+                    _internalConfig.SigScanResults.Add(new SigScanResults(functionName, pattern, _exeHash, false, -1));
+                }
+                _internalConfig.Save();
                 LogError($"An error occured trying to find the {functionName} function address. Not initializing. Please report this with information on the version of P4G you are running", exception);
                 return -1;
             }
@@ -247,16 +310,6 @@ namespace p4gpc.tinyadditions
                 array[i] = array[i - 1];
             }
             array[0] = newItem;
-        }
-
-        /// <summary>
-        /// Runs a function asynchronously
-        /// A cleaner way to do a task.run on a sing function
-        /// </summary>
-        /// <param name="action">The paramaterless void returning function to run</param>
-        public void RunAsync(Action action)
-        {
-            Task.Run(() => action());
         }
     }
 }

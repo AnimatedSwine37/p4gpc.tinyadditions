@@ -33,7 +33,8 @@ namespace p4gpc.tinyadditions.Configuration.Implementation
             _configurations = new IUpdatableConfigurable[]
             {
                 // Add more configurations here if needed.
-                Configurable<Config>.FromFile(Path.Combine(ConfigFolder, "Config.json"), "Default Config")
+                Configurable<Config>.FromFile(Path.Combine(ConfigFolder, "Config.json"), "Default Config"),
+                Configurable<InternalConfig>.FromFile(Path.Combine(ConfigFolder,"InternalConfig.json"), "Internal Config DO NOT TOUCH!!")
             };
 
             // Add self-updating to configurations.
@@ -93,7 +94,7 @@ namespace p4gpc.tinyadditions.Configuration.Implementation
 
         /// <summary>
         /// Sets the config directory for the Configurator.
-        /// </summary>
+        /// </summary>R
         public void SetConfigDirectory(string configDirectory) => ConfigFolder = configDirectory;
 
         /// <summary>

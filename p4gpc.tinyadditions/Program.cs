@@ -33,6 +33,11 @@ namespace p4gpc.tinyadditions
         private Config _configuration;
 
         /// <summary>
+        /// Stores internal information used for sig scanning
+        /// </summary>
+        private InternalConfig _internalConfig;
+
+        /// <summary>
         /// Stores a reference to the controller hook in other mod.
         /// </summary>
         private WeakReference<IInputHook> _inputHook;
@@ -74,6 +79,7 @@ namespace p4gpc.tinyadditions
             configurator.Migrate(_modLoader.GetDirectoryForModId(_modConfig.ModId), configurator.ConfigFolder);
             _configuration = configurator.GetConfiguration<Config>(0);
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
+            _internalConfig = configurator.GetConfiguration<InternalConfig>(1);
 
             /*
                 Your mod code starts below.
@@ -82,7 +88,7 @@ namespace p4gpc.tinyadditions
             using var thisProcess = Process.GetCurrentProcess();
             int baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
             IMemory memory = new Memory();
-            _utils = new Utils(_configuration, _logger, baseAddress, memory);
+            _utils = new Utils(_configuration, _logger, baseAddress, memory, _internalConfig);
             _inputs = new Inputs(_hooks, _configuration, _utils, baseAddress, memory);
             _modLoader.ModLoaded += ModLoaded;
             SetupInput();
