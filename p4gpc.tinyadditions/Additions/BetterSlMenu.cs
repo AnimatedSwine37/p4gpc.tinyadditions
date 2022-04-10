@@ -20,30 +20,13 @@ namespace p4gpc.tinyadditions.Additions
         public BetterSlMenu(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
             _currentStatus = _memory.Allocate(1);
-            List<Task> initTasks = new List<Task>();
-            initTasks.Add(Task.Run(() =>
-            {
-                long displayMaxAddress = _utils.SigScan("83 7E ?? 01 C7 44 24 ?? 00 00 00 00", "display max");
-                _memory.SafeWrite((IntPtr)(displayMaxAddress + 2), (short)0x0A04); // Switch checking status = 1 to checking if rank = 10
-            }));
-            initTasks.Add(Task.Run(() =>
-            {
-                long detailsMaxAddress = _utils.SigScan("83 7C ?? ?? 01 A1 ?? ?? ?? ??", "details display max");
-                _memory.SafeWrite((IntPtr)(detailsMaxAddress + 3), (short)0x0A40); // Switch checking status = 1 to checking if rank = 10
-            }));
-            initTasks.Add(Task.Run(() =>
-            {
-                InitFixMaxDisplayHook();
-            }));
-            initTasks.Add(Task.Run(() =>
-            {
-                InitGrabStatusHook();
-            }));
-            initTasks.Add(Task.Run(() =>
-            {
-                InitRankColourHook();
-            }));
-            Task.WaitAll(initTasks.ToArray());
+            long displayMaxAddress = _utils.SigScan("83 7E ?? 01 C7 44 24 ?? 00 00 00 00", "display max");
+            _memory.SafeWrite((IntPtr)(displayMaxAddress + 2), (short)0x0A04); // Switch checking status = 1 to checking if rank = 10
+            long detailsMaxAddress = _utils.SigScan("83 7C ?? ?? 01 A1 ?? ?? ?? ??", "details display max");
+            _memory.SafeWrite((IntPtr)(detailsMaxAddress + 3), (short)0x0A40); // Switch checking status = 1 to checking if rank = 10
+            InitFixMaxDisplayHook();
+            InitGrabStatusHook();
+            InitRankColourHook();
         }
 
         // Initialise the hook that fixes the display so it shows Reverse or Broken stuff instead of max if the sl is maxed

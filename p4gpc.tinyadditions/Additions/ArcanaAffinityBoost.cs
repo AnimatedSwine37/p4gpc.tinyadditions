@@ -29,20 +29,9 @@ namespace p4gpc.tinyadditions.Additions
 
             // Get bonus addresses
             long functionStartAddress = -1, checkBonusAddress = -1, giveBonusAddress = -1;
-            List<Task> sigScanTasks = new List<Task>();
-            sigScanTasks.Add(Task.Run(() =>
-            {
-                checkBonusAddress = _utils.SigScan("F3 0F 10 0D ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 8B 7A ??", "check bonus affinity");
-            }));
-            sigScanTasks.Add(Task.Run(() =>
-            {
-                functionStartAddress = _utils.SigScan("55 ?? ?? 83 EC 08 56 57 66 ?? ?? 89 55 ??", "social link affinity start");
-            }));
-            sigScanTasks.Add(Task.Run(() =>
-            {
-                giveBonusAddress = _utils.SigScan("0F 84 ?? ?? ?? ?? 47 E8 ?? ?? ?? ??", "give bonus affinity pointer");
-            }));
-            Task.WaitAll(sigScanTasks.ToArray());
+            checkBonusAddress = _utils.SigScan("F3 0F 10 0D ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 8B 7A ??", "check bonus affinity");
+            functionStartAddress = _utils.SigScan("55 ?? ?? 83 EC 08 56 57 66 ?? ?? 89 55 ??", "social link affinity start");
+            giveBonusAddress = _utils.SigScan("0F 84 ?? ?? ?? ?? 47 E8 ?? ?? ?? ??", "give bonus affinity pointer");
             if (checkBonusAddress == -1 || giveBonusAddress == -1 || functionStartAddress == -1) return;
 
             _memory.SafeRead((IntPtr)(giveBonusAddress + 2), out byte giveBonusOffset);

@@ -35,20 +35,9 @@ namespace p4gpc.tinyadditions.Additions
 
             // Sig scan stuff
             long displayRankStartAddress = -1, displayRankAddress = -1, checkLvlUpAddress = -1;
-            List<Task> sigScanTasks = new List<Task>();
-            sigScanTasks.Add(Task.Run(() =>
-            {
-                displayRankStartAddress = _utils.SigScan("F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 1C 0F B7 56 ??", "display rank start");
-            }));
-            sigScanTasks.Add(Task.Run(() =>
-            {
-                displayRankAddress = _utils.SigScan("50 E8 ?? ?? ?? ?? F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 30", "display rank");
-            }));
-            sigScanTasks.Add(Task.Run(() =>
-            {
-                checkLvlUpAddress = _utils.SigScan("53 ?? ?? B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 66 85 DB", "check if sl level up");
-            }));
-            Task.WaitAll(sigScanTasks.ToArray());
+            displayRankStartAddress = _utils.SigScan("F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 1C 0F B7 56 ??", "display rank start");
+            displayRankAddress = _utils.SigScan("50 E8 ?? ?? ?? ?? F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 30", "display rank");
+            checkLvlUpAddress = _utils.SigScan("53 ?? ?? B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 66 85 DB", "check if sl level up");
 
             if (displayRankStartAddress == -1 || displayRankAddress == -1 || checkLvlUpAddress == -1)
             {
@@ -151,7 +140,7 @@ namespace p4gpc.tinyadditions.Additions
         {
             _memory.Read(slInfoAddress + 4, out short rank);
             // Max rank s links shouldn't check for rankup
-            if(rank >= 10)
+            if (rank >= 10)
             {
                 _slChecked = false;
                 return true;

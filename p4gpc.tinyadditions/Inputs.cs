@@ -48,42 +48,16 @@ namespace p4gpc.tinyadditions
             _utils.Log("Initialise Additions");
 
             // Initialise additions
-            List<Task> additionInits = new List<Task>();
-            additionInits.Add(Task.Run(() =>
-            {
-                _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
-                _additions.Add(_sprint);
-            }));
-            additionInits.Add(Task.Run(() =>
-            {
-                _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
-                _additions.Add(_autoAdvanceToggle);
-            }));
-            additionInits.Add(Task.Run(() =>
-            {
-                _additions.Add(new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks));
-            }));
-            additionInits.Add(Task.Run(() =>
-            {
-                _additions.Add(new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks));
-            }));
-            additionInits.Add(Task.Run(() =>
-            {
-                _additions.Add(new CustomItems(_utils, _baseAddress, _config, _memory, _hooks));
-            }));
-            additionInits.Add(Task.Run(() =>
-            {
-                _additions.Add(new RankupReady(_utils, _baseAddress, _config, _memory, _hooks));
-            }));
-            additionInits.Add(Task.Run(() =>
-            {
-                _additions.Add(new BetterSlMenu(_utils, _baseAddress, _config, _memory, _hooks));
-            }));
-            additionInits.Add(Task.Run(() =>
-            {
-                _additions.Add(new PersistentBGM(_utils, _baseAddress, _config, _memory, _hooks));
-            }));
-            Task.WaitAll(additionInits.ToArray());
+            _sprint = new Sprint(_utils, _baseAddress, _config, _memory, _hooks);
+            _additions.Add(_sprint);
+            _autoAdvanceToggle = new AutoAdvanceToggle(_utils, _baseAddress, _config, _memory, _hooks);
+            _additions.Add(_autoAdvanceToggle);
+            _additions.Add(new EasyBugCatching(_utils, _baseAddress, _config, _memory, _hooks));
+            _additions.Add(new ArcanaAffinityBoost(_utils, _baseAddress, _config, _memory, _hooks));
+            _additions.Add(new CustomItems(_utils, _baseAddress, _config, _memory, _hooks));
+            _additions.Add(new RankupReady(_utils, _baseAddress, _config, _memory, _hooks));
+            _additions.Add(new BetterSlMenu(_utils, _baseAddress, _config, _memory, _hooks));
+            _additions.Add(new PersistentBGM(_utils, _baseAddress, _config, _memory, _hooks));
         }
 
         // Do stuff with the inputs

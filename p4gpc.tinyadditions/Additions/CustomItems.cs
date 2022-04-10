@@ -37,11 +37,9 @@ namespace p4gpc.tinyadditions.Additions
             _utils.Log("Initialising custom items");
 
             long skillIdLocation = -1;
-            List<Task> sigScanTasks = new List<Task>();
-            sigScanTasks.Add(Task.Run(() => _flowFunctionLocation = _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 6A 05", "custom items flow function")));
-            sigScanTasks.Add(Task.Run(() => _freezeControlsLocation = _utils.SigScan("C7 46 ?? 03 00 00 00 B8 01 00 00 00 5E 5D C3 A1 ?? ?? ?? ??", "custom items freeze controls")));
-            sigScanTasks.Add(Task.Run(() => skillIdLocation = _utils.SigScan("B8 F6 00 00 00 66 ?? ?? 75 17", "custom skill id")));
-            Task.WaitAll(sigScanTasks.ToArray());
+            _flowFunctionLocation = _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 6A 05", "custom items flow function");
+            _freezeControlsLocation = _utils.SigScan("C7 46 ?? 03 00 00 00 B8 01 00 00 00 5E 5D C3 A1 ?? ?? ?? ??", "custom items freeze controls");
+            skillIdLocation = _utils.SigScan("B8 F6 00 00 00 66 ?? ?? 75 17", "custom skill id");
 
             // Get the dungeon flow location
             _memory.SafeRead((IntPtr)_flowFunctionLocation + 0x1A, out int getDungeonFlowFuncOffset);
