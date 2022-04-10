@@ -38,6 +38,9 @@ The symbol that is displayed can be chosen between 4 that I thought fit well and
 ### Fixed SL Menu
 Makes it so the S.Link menu correctly shows S.Links that are both maxed and reversed or broken. As there is normally no way to break or reverse a maxed link the game normally displays it incorrectly. This is a background addition and as such is always enabled and won't actually make a difference to your game unless you are using a mod that takes advantage of it (none are out yet).
 
+### Persistent BGM
+Makes it so dungeon BGM continues playing when you enter a battle (excluding boss battles). Which dungeons this effects can be configured and you can even set it so there's a random chance to get either persistent BGM or the normal battle BGM on a per dungeon basis. By default persistent BGM is set to off for every dungeon so you'll need to enable it for the ones you want it in.
+
 ## Planned Additions
 These are features that I would like to add however, there is no guarantee that any of them every actually happen. If you want to have a crack at implementing one of these then go for it! (more info in [contributing](#contributing)) 
 
