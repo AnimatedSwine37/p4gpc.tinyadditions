@@ -22,19 +22,27 @@ namespace p4gpc.tinyadditions.Additions
         private IAsmHook _btlEnterStopBgmHook;
         private IAsmHook _resultsStartBgmHook;
         private IAsmHook _afterResultsStopBgmHook;
+        private IAsmHook _callBattleHook;
+        private IAsmHook _btlStartHook;
         private List<IAsmHook> _hooksList;
         private IntPtr _shouldSwitchBgm;
+        private IntPtr _encounterId;
 
         private GetFloorId _getFloorId;
 
         public PersistentBGM(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
             _shouldSwitchBgm = _memory.Allocate(1);
+            _memory.Write(_shouldSwitchBgm, true);
+            _encounterId = _memory.Allocate(4);
+            _hooksList = new List<IAsmHook>();
             InitialiseGetFloorId();
             InitBtlBgmStartHook();
             InitBtlEnterStopBgmHook();
             InitResultsStartBgmHook();
             InitAfterResultsStopBgmHook();
+            InitCallBattleHook();
+            InitBtlStartHook();
         }
 
         public override void Resume()
@@ -59,6 +67,25 @@ namespace p4gpc.tinyadditions.Additions
         }
 
         /// <summary>
+        /// Initialises the a hook for the call battle flow function so the encounter id can be stored
+        /// </summary>
+        private void InitCallBattleHook()
+        {
+            long address = _utils.SigScan("E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 89 44 24 ?? 85 C9", "call battle");
+            string[] function =
+            {
+                "use32",
+                $"cmp dword [{_encounterId}], eax",
+                // Skip this if we already have the encounter id
+                "je endHook",
+                $"mov dword [{_encounterId}], eax",
+                "label endHook"
+            };
+            _callBattleHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            _hooksList.Add(_callBattleHook);
+        }
+
+        /// <summary>
         /// Initialises the hook that controls battle bgm starting
         /// </summary>
         private void InitBtlBgmStartHook()
@@ -75,6 +102,7 @@ namespace p4gpc.tinyadditions.Additions
                 "label endHook",
             };
             _btlBgmStartHook = _hooks.CreateAsmHook(function, address - 2, AsmHookBehaviour.ExecuteFirst).Activate();
+            _hooksList.Add(_btlBgmStartHook);
         }
 
         /// <summary>
@@ -97,6 +125,7 @@ namespace p4gpc.tinyadditions.Additions
                 "label endHook",
             };
             _btlEnterStopBgmHook = _hooks.CreateAsmHook(function, address - 2, AsmHookBehaviour.ExecuteFirst).Activate();
+            _hooksList.Add(_btlEnterStopBgmHook);
         }
 
         /// <summary>
@@ -116,6 +145,7 @@ namespace p4gpc.tinyadditions.Additions
                 "label endHook",
             };
             _resultsStartBgmHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteFirst).Activate();
+            _hooksList.Add(_resultsStartBgmHook);
         }
 
         /// <summary>
@@ -130,11 +160,30 @@ namespace p4gpc.tinyadditions.Additions
                 $"cmp byte [{_shouldSwitchBgm}], 1",
                 // If we should switch bgm end the hook, running the original code
                 $"je endHook",
+                // Turn should switch on to on so it doesn't effect boss battles
+                $"mov byte [{_shouldSwitchBgm}], 1",
                 // Jump to the instruction after this start bgm call so it's skipped
                 $"{_hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)(address + 5), false)}",
                 "label endHook",
             };
             _afterResultsStopBgmHook = _hooks.CreateAsmHook(function, address - 2, AsmHookBehaviour.ExecuteFirst).Activate();
+            _hooksList.Add(_afterResultsStopBgmHook);
+        }
+
+        /// <summary>
+        /// Initialises the hook that happens just before a battle starts when hit by or hitting an enemy
+        /// Used so music can persist after a boss battle properly
+        /// </summary>
+        private void InitBtlStartHook()
+        {
+            long address = _utils.SigScan("A1 ?? ?? ?? ?? F3 0F 10 05 ?? ?? ?? ?? 89 87 ?? ?? ?? ??", "battle start");
+            string[] function =
+            {
+                "use32",
+                $"mov dword [{_encounterId}], 0"
+            };
+            _btlStartHook = _hooks.CreateAsmHook(function,address, AsmHookBehaviour.ExecuteFirst).Activate();   
+            _hooksList.Add(_btlStartHook);
         }
 
         private List<Dungeon> _dungeons = new List<Dungeon>
@@ -168,6 +217,13 @@ namespace p4gpc.tinyadditions.Additions
 
             _utils.LogDebug($"The floor id is {floorId} in the dungeon {dungeon.Name}");
 
+            // Never persist bgm into boss battles
+            if(IsBossBattle())
+            {
+                _memory.Write(_shouldSwitchBgm, true);
+                return true;
+            }
+
             Random random = new Random();
             double randomNum = random.NextDouble();
             float normalChance = (float)_configuration.GetType().GetProperty($"{dungeon.Name}NormalChance")!.GetValue(_configuration)!;
@@ -181,6 +237,20 @@ namespace p4gpc.tinyadditions.Additions
 
             _memory.Write(_shouldSwitchBgm, switchBgm);
             return switchBgm;
+        }
+
+
+        /// <summary>
+        /// Checks if the current encounter is a boss battle
+        /// </summary>
+        /// <returns>True if it is a boss battle, false otherwise</returns>
+        private bool IsBossBattle()
+        {
+            _memory.Read(_encounterId, out int encounterId);
+            _utils.LogDebug($"The current encounter is id {encounterId}");
+            return (encounterId >= 512 && encounterId <= 535) 
+                || (encounterId >= 801 && encounterId <= 820) 
+                || encounterId == 938 || encounterId == 939;
         }
 
 
