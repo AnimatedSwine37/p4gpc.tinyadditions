@@ -96,10 +96,10 @@ namespace p4gpc.tinyadditions
                     else
                         _sprint.EnableSprint();
                 }
-                // Check if auto advance should be toggled
-                if (_config.AdvanceEnabled && _utils.InEvent() && (input == (int)_config.AdvanceButton || InputInCombo(input, _config.AdvanceButton, keyboard)) && risingEdge)
-                    _autoAdvanceToggle.ToggleAutoAdvance();
             }
+            // Check if auto advance should be toggled
+            if (_config.AdvanceEnabled && _utils.InEvent() && (input == (int)_config.AdvanceButton || InputInCombo(input, _config.AdvanceButton, keyboard)) && risingEdge)
+                _autoAdvanceToggle.ToggleAutoAdvance();
         }
 
         private List<Input> GetInputsFromCombo(int inputCombo, bool keyboard)
