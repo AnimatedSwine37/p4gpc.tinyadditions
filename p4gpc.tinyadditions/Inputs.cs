@@ -64,6 +64,8 @@ namespace p4gpc.tinyadditions
         private bool[] sprintPressed = { false, false };
         public void SetInputEvent(int input, bool risingEdge, bool keyboard)
         {
+            _utils.LogDebug($"Input was {(Input)input} and {(risingEdge ? "rising edge" : "falling edge")}");
+
             if (!_itemLocationInitialised)
             {
                 Task.Run(() =>
