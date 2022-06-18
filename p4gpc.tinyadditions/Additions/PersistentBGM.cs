@@ -16,19 +16,19 @@ namespace p4gpc.tinyadditions.Additions
 {
     class PersistentBGM : Addition
     {
-        private IReverseWrapper<ShouldSwitchBgmFunction> _shouldSwitchBgmReverseWrapper;
+        private IReverseWrapper<ShouldSwitchBgmFunction>? _shouldSwitchBgmReverseWrapper;
 
-        private IAsmHook _btlBgmStartHook;
-        private IAsmHook _btlEnterStopBgmHook;
-        private IAsmHook _resultsStartBgmHook;
-        private IAsmHook _afterResultsStopBgmHook;
-        private IAsmHook _callBattleHook;
-        private IAsmHook _btlStartHook;
+        private IAsmHook? _btlBgmStartHook;
+        private IAsmHook? _btlEnterStopBgmHook;
+        private IAsmHook? _resultsStartBgmHook;
+        private IAsmHook? _afterResultsStopBgmHook;
+        private IAsmHook? _callBattleHook;
+        private IAsmHook? _btlStartHook;
         private List<IAsmHook> _hooksList;
         private IntPtr _shouldSwitchBgm;
         private IntPtr _encounterId;
 
-        private GetFloorId _getFloorId;
+        private GetFloorId? _getFloorId;
 
         public PersistentBGM(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
@@ -198,6 +198,8 @@ namespace p4gpc.tinyadditions.Additions
         /// <returns>True if we should switch it, false if the current bgm should persist</returns>
         private bool ShouldSwitchBgm(int eax)
         {
+            if (_getFloorId == null)
+                return true;
             int floorId = _getFloorId();
             Dungeon? dungeon = _dungeons.FirstOrDefault(x => floorId > x.StartFloor && floorId <= x.EndFloor);
             
