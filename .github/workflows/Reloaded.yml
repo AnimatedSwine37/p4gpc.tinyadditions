@@ -80,7 +80,7 @@ jobs:
         }
         
     - name: Build
-      run: ./p4gpc.tinyadditions/Publish.ps1 -ChangelogPath "$env:PUBLISH_CHANGELOG_PATH"
+      run: ./p4gpc.tinyadditions/Publish.ps1 -ChangelogPath "$env:PUBLISH_CHANGELOG_PATH" -UseNuGetDelta true
       
     - name: Upload GitHub Release Artifact
       uses: actions/upload-artifact@v2.2.4
