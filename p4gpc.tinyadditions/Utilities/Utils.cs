@@ -184,6 +184,7 @@ namespace p4gpc.tinyadditions
                 {
                     LogDebug($"Using previous address (0x{previousResult.Address:X}) for {functionName}");
                     successAction((int)previousResult.Address);
+                    return;
                 }
             }
             if (_scanner == null)
