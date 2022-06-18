@@ -151,7 +151,7 @@ param (
     $RemoveExe = $True,
 	
     ## => User Config <= ## 
-    $ProjectPath = "p4gpc.tinyadditions/p4gpc.tinyadditions.csproj",
+    $ProjectPath = "p4gpc.tinyadditions.csproj",
     $PackageName = "p4gpc.tinyadditions",
     $PublishOutputDir = "Publish/ToUpload",
 
