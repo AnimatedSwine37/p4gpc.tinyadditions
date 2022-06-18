@@ -79,7 +79,7 @@ namespace p4gpc.tinyadditions
 
         // Initialises the item location as right at startup the pointer does not exist
         // (called once an input is read)
-        public bool InitialiseItemLocation()
+        public void InitialiseItemLocation()
         {
             // Get item location
             long itemLocationPointer = SigScan("A1 ?? ?? ?? ?? 0F BF D6 ?? ?? C1 E1 04", "item pointer");
@@ -91,15 +91,12 @@ namespace p4gpc.tinyadditions
                     LogDebug($"The item pointer location is 0x{pointer:X}");
                     _memory.SafeRead(pointer, out _itemLocation);
                     LogDebug($"Items begin at 0x{_itemLocation:X}");
-                    if ((int)_itemLocation == 0) return false;
                 }
                 catch (Exception e)
                 {
                     LogError("Unable to read item location", e);
-                    return false;
                 }
             }
-            return true;
         }
 
         public enum Input
