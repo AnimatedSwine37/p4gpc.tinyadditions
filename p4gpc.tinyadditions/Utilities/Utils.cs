@@ -181,7 +181,10 @@ namespace p4gpc.tinyadditions
             {
                 // Use the previous result if all of the conditions were the same as now
                 if (previousResult.WasSuccessful && previousResult.Pattern == pattern && previousResult.ExeHash == _exeHash)
+                {
+                    LogDebug($"Using previous address (0x{previousResult.Address:X}) for {functionName}");
                     successAction((int)previousResult.Address);
+                }
             }
             if (_scanner == null)
             {
@@ -222,7 +225,10 @@ namespace p4gpc.tinyadditions
             {
                 // Use the previous result if all of the conditions were the same as now
                 if (previousResult.WasSuccessful && previousResult.Pattern == pattern && previousResult.ExeHash == _exeHash)
+                {
+                    LogDebug($"Using previous address (0x{previousResult.Address:X}) for {functionName}");
                     return previousResult.Address;
+                }                    
             }
             try
             {
