@@ -20,19 +20,18 @@ namespace p4gpc.tinyadditions.Additions
         public BetterSlMenu(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
             _currentStatus = _memory.Allocate(1);
-            long displayMaxAddress = _utils.SigScan("83 7E ?? 01 C7 44 24 ?? 00 00 00 00", "display max");
-            _memory.SafeWrite((IntPtr)(displayMaxAddress + 2), (short)0x0A04); // Switch checking status = 1 to checking if rank = 10
-            long detailsMaxAddress = _utils.SigScan("83 7C ?? ?? 01 A1 ?? ?? ?? ??", "details display max");
-            _memory.SafeWrite((IntPtr)(detailsMaxAddress + 3), (short)0x0A40); // Switch checking status = 1 to checking if rank = 10
-            InitFixMaxDisplayHook();
-            InitGrabStatusHook();
-            InitRankColourHook();
+            _utils.SigScan("83 7E ?? 01 C7 44 24 ?? 00 00 00 00", "display max",
+                (result) => _memory.SafeWrite((IntPtr)(result + 2), (short)0x0A04)); // Switch checking status = 1 to checking if rank = 10)
+            _utils.SigScan("83 7C ?? ?? 01 A1 ?? ?? ?? ??", "details display max",
+                (result) => _memory.SafeWrite((IntPtr)(result + 3), (short)0x0A04)); // Switch checking status = 1 to checking if rank = 10)
+            _utils.SigScan("75 ?? 8D 04 ?? C7 44 ?? ?? 01 00 00 00", "fixed reverse/broken display", InitFixMaxDisplayHook);
+            _utils.SigScan("83 F8 01 0F 84 ?? ?? ?? ?? 83 C0 FE", "grab status", InitGrabStatusHook);
+            _utils.SigScan("56 8B 80 ?? ?? ?? ?? ?? ?? C1 E9", "details rank colour", InitRankColourHook);
         }
 
         // Initialise the hook that fixes the display so it shows Reverse or Broken stuff instead of max if the sl is maxed
-        void InitFixMaxDisplayHook()
+        void InitFixMaxDisplayHook(int address)
         {
-            long address = _utils.SigScan("75 ?? 8D 04 ?? C7 44 ?? ?? 01 00 00 00", "fixed reverse/broken display");
             _memory.SafeWrite((IntPtr)address, (byte)0xEB); // Switch the jne at this address to a jmp so the code is skipped
             string[] function =
             {
@@ -55,9 +54,8 @@ namespace p4gpc.tinyadditions.Additions
         }
 
         // Initialises a hook that grabs the current slink's status so it can be use later in the rank colour hook
-        private void InitGrabStatusHook()
+        private void InitGrabStatusHook(int address)
         {
-            long address = _utils.SigScan("83 F8 01 0F 84 ?? ?? ?? ?? 83 C0 FE", "grab status");
             string[] function =
             {
                 "use32",
@@ -67,9 +65,8 @@ namespace p4gpc.tinyadditions.Additions
         }
 
         // Initialises a hook that corrects the colour of the rank text if it's a max and broken/reverse link
-        private void InitRankColourHook()
+        private void InitRankColourHook(int address)
         {
-            long rankColourAddress = _utils.SigScan("56 8B 80 ?? ?? ?? ?? ?? ?? C1 E9", "details rank colour");
             string[] function =
             {
                 "use32",
@@ -84,7 +81,7 @@ namespace p4gpc.tinyadditions.Additions
                 "label endHook",
 
             };
-            _rankColourHook = _hooks.CreateAsmHook(function, rankColourAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+            _rankColourHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
         }
 
         public override void Resume()

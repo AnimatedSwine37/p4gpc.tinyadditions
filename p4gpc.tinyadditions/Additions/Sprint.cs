@@ -18,37 +18,37 @@ namespace p4gpc.tinyadditions
         private IntPtr _speedLocation;
 
         // For calling C# code from ASM.
-        private IReverseWrapper<SpeedChangedFunction> _speedChangeReverseWrapper;
-        private IAsmHook _speedChangeHook;
+        private IReverseWrapper<SpeedChangedFunction>? _speedChangeReverseWrapper;
+        private IAsmHook? _speedChangeHook;
 
         // Keep track of the normal speed
         private float normalSpeed = 0;
 
         public Sprint(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
-            _speedLocation = (IntPtr)0x21AB56F4 + _baseAddress;
+            // Find function location
+            _utils.SigScan("F3 0F 11 05 ?? ?? ?? ?? F3 0F 11 0D ?? ?? ?? ?? C7 05 ?? ?? ?? ?? 00 00 40 40 E8 ?? ?? ?? ??", "speed change", Initialise);
+        }
 
-            _utils.Log("Initialising sprint");
 
+        private void Initialise(int address)
+        {
             // Initialise speed factor change hook (when switching fields the normal speed changes sometimes)
             string[] function =
             {
                     $"use32",
                     // Not always necessary but good practice;
                     // just in case the parent function doesn't preserve them.
-                    $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                    $"{hooks.Utilities.GetAbsoluteCallMnemonics(SpeedChanged, out _speedChangeReverseWrapper)}",
-                    $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
-                };
+                    $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                    $"{_hooks.Utilities.GetAbsoluteCallMnemonics(SpeedChanged, out _speedChangeReverseWrapper)}",
+                    $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+             };
 
-            // Find function location
-            long speedChangeAddress = _utils.SigScan("F3 0F 11 05 ?? ?? ?? ?? F3 0F 11 0D ?? ?? ?? ?? C7 05 ?? ?? ?? ?? 00 00 40 40 E8 ?? ?? ?? ??", "speed change");
-            if (speedChangeAddress == -1) return;
             // Find speed location
-            _memory.SafeRead((IntPtr)(speedChangeAddress + 4), out _speedLocation);
+            _memory.SafeRead((IntPtr)(address + 4), out _speedLocation);
             _utils.LogDebug($"The speed location is 0x{_speedLocation:X}");
             // Create speed changed hook
-            _speedChangeHook = _hooks.CreateAsmHook(function, speedChangeAddress, AsmHookBehaviour.ExecuteAfter).Activate();
+            _speedChangeHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.ExecuteAfter).Activate();
             _utils.Log("Successfully initialised sprint");
         }
 

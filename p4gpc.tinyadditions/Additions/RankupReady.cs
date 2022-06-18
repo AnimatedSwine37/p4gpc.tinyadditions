@@ -17,13 +17,16 @@ namespace p4gpc.tinyadditions.Additions
 {
     class RankupReady : Addition
     {
-        private IAsmHook _displayRankHook;
-        private IAsmHook _beforeDisplayRankHook;
-        private IReverseWrapper<AlreadyCheckedFunction> _alreadyCheckedReverseWrapper;
-        private IReverseWrapper<GetRankupSymbolFunction> _getRankupSymbolReverseWrapper;
-        private CheckIfSlLvlUp _checkIfSlLvlUp;
+        private IAsmHook? _displayRankHook;
+        private IAsmHook? _beforeDisplayRankHook;
+        private IReverseWrapper<AlreadyCheckedFunction>? _alreadyCheckedReverseWrapper;
+        private IReverseWrapper<GetRankupSymbolFunction>? _getRankupSymbolReverseWrapper;
+        private CheckIfSlLvlUp? _checkIfSlLvlUp;
         private bool _slChecked = false;
         private IntPtr _rankupSymbolOffsetAddress;
+
+        private int _displayRankStartAddress = -1;
+        private int _displayRankAddress = -1;
 
         public RankupReady(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
@@ -34,22 +37,35 @@ namespace p4gpc.tinyadditions.Additions
             _memory.Write(_rankupSymbolOffsetAddress, _configuration.RankupReadySymbolOffset);
 
             // Sig scan stuff
-            long displayRankStartAddress = -1, displayRankAddress = -1, checkLvlUpAddress = -1;
-            displayRankStartAddress = _utils.SigScan("F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 1C 0F B7 56 ??", "display rank start");
-            displayRankAddress = _utils.SigScan("50 E8 ?? ?? ?? ?? F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 30", "display rank");
-            checkLvlUpAddress = _utils.SigScan("53 ?? ?? B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 66 85 DB", "check if sl level up");
-
-            if (displayRankStartAddress == -1 || displayRankAddress == -1 || checkLvlUpAddress == -1)
-            {
-                _utils.LogError("Failed to find all addresses required for Visible Rankup Ready. It will not be initialised.");
-                return;
-            }
-
-            // Create a wrapper for the native CHECK_IF_SL_LVLUP function that can be called
-            _checkIfSlLvlUp = _hooks.CreateWrapper<CheckIfSlLvlUp>(checkLvlUpAddress, out IntPtr checkIfLvlUpAddress);
-
-            string[] beforeRenderFunction =
+            _utils.SigScan("F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 1C 0F B7 56 ??", "display rank start",
+                (result) =>
                 {
+                    _displayRankStartAddress = result;
+                    if (_displayRankAddress != -1)
+                        InitRenderHooks();
+                });
+            _utils.SigScan("50 E8 ?? ?? ?? ?? F3 0F 10 44 24 ?? 8D 84 24 ?? ?? ?? ?? 83 C4 30", "display rank",
+                (result) =>
+                {
+                    _displayRankAddress = result;
+                    if (_displayRankStartAddress != -1)
+                        InitRenderHooks();
+                });
+            _utils.SigScan("53 ?? ?? B9 ?? ?? ?? ?? 56 E8 ?? ?? ?? ?? 66 85 DB", "check if sl level up", InitLevelUpCheck);
+        }
+
+        private void InitLevelUpCheck(int address)
+        {
+            // Create a wrapper for the native CHECK_IF_SL_LVLUP function that can be called
+            _checkIfSlLvlUp = _hooks.CreateWrapper<CheckIfSlLvlUp>(address, out IntPtr checkIfLvlUpAddress);
+            if (_displayRankAddress != -1 && _displayRankStartAddress != -1)
+                _utils.Log("Successfully Initialised Visible Rankup Ready");
+        }
+
+        private void InitRenderHooks()
+        {
+            string[] beforeRenderFunction =
+            {
                 $"use32",
                 // Save xmm0
                 $"sub esp, 16", // allocate space on stack
@@ -58,8 +74,8 @@ namespace p4gpc.tinyadditions.Additions
                 $"sub esp, 16", // allocate space on stack
                 $"movdqu dqword [esp], xmm3",
                 // Get the rankup symbol
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(GetRankupSymbol, out _getRankupSymbolReverseWrapper)}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRankupSymbol, out _getRankupSymbolReverseWrapper)}",
                 $"cmp eax, 0",
                 // Jump back to the original code if we shouldn't display the rankup symbol
                 $"je noRankup",
@@ -69,10 +85,6 @@ namespace p4gpc.tinyadditions.Additions
                 $"pop ecx",
                 $"pop ecx",
                 $"pop eax",
-                // Get value to increase xmm3 by
-                //$"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                //$"{hooks.Utilities.GetAbsoluteCallMnemonics(GetRankupSymbolOffset, out _getRankupSymbolOffsetReverseWrapper)}",
-                //$"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 // Restore xmm3
                 $"movdqu xmm3, dqword [esp]",
                 $"add esp, 16", // re-align the stack
@@ -81,7 +93,7 @@ namespace p4gpc.tinyadditions.Additions
                 $"jmp endCode",
                 // Pop all call registers if there was no rankup symbol to render
                 $"label noRankup",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 // Restore xmm3
                 $"movdqu xmm3, dqword [esp]",
                 $"add esp, 16", // re-align the stack
@@ -96,20 +108,20 @@ namespace p4gpc.tinyadditions.Additions
             {
                 $"use32",
                 // See if the current slink has been done already
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(AlreadyChecked, out _alreadyCheckedReverseWrapper)}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(AlreadyChecked, out _alreadyCheckedReverseWrapper)}",
                 $"cmp eax, 1",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 // If already checked leave this code
                 $"je endCode",
                 // Jump back to the before render hook since we need to check it
-                $"{hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)displayRankStartAddress, false)}",
+                $"{_hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)_displayRankStartAddress, false)}",
                 $"label endCode",
             };
-            _beforeDisplayRankHook = hooks.CreateAsmHook(beforeRenderFunction, displayRankAddress - 7, AsmHookBehaviour.ExecuteAfter).Activate();
-            _displayRankHook = hooks.CreateAsmHook(renderFunction, displayRankAddress + 1, AsmHookBehaviour.ExecuteAfter).Activate();
-
-            _utils.Log("Successfully Initialised Visible Rankup Ready");
+            _beforeDisplayRankHook = _hooks.CreateAsmHook(beforeRenderFunction, _displayRankAddress - 7, AsmHookBehaviour.ExecuteAfter).Activate();
+            _displayRankHook = _hooks.CreateAsmHook(renderFunction, _displayRankAddress + 1, AsmHookBehaviour.ExecuteAfter).Activate();
+            if (_checkIfSlLvlUp != null)
+                _utils.Log("Successfully Initialised Visible Rankup Ready");
         }
 
         public override void Resume()
@@ -152,7 +164,7 @@ namespace p4gpc.tinyadditions.Additions
         // Returns the symbol number to indicate that a social link is ready to rank up if they are, otherwise returns 0
         private int GetRankupSymbol(IntPtr slInfoAddress)
         {
-            if (!_configuration.RankupReadyEnabled) return 0;
+            if (!_configuration.RankupReadyEnabled || _checkIfSlLvlUp == null) return 0;
             //_utils.LogDebug($"The sl info address is 0x{slInfoAddress:X}");
             // Get the id of the current social link
             _memory.Read(slInfoAddress + 2, out SocialLink socialLink);

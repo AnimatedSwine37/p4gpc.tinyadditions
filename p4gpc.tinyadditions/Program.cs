@@ -2,6 +2,7 @@
 using p4gpc.tinyadditions.Configuration;
 using p4gpc.tinyadditions.Configuration.Implementation;
 using Reloaded.Hooks.ReloadedII.Interfaces;
+using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
 using Reloaded.Memory.Sources;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
@@ -85,10 +86,11 @@ namespace p4gpc.tinyadditions
                 Your mod code starts below.
                 Visit https://github.com/Reloaded-Project for additional optional libraries.
             */
+            _modLoader.GetController<IStartupScanner>().TryGetTarget(out var startupScanner);
             using var thisProcess = Process.GetCurrentProcess();
             int baseAddress = thisProcess.MainModule.BaseAddress.ToInt32();
             IMemory memory = new Memory();
-            _utils = new Utils(_configuration, _logger, baseAddress, memory, _internalConfig);
+            _utils = new Utils(_configuration, _logger, baseAddress, memory, _internalConfig, startupScanner);
             _inputs = new Inputs(_hooks, _configuration, _utils, baseAddress, memory);
             _modLoader.ModLoaded += ModLoaded;
             SetupInput();

@@ -15,68 +15,76 @@ namespace p4gpc.tinyadditions.Additions
 {
     class ArcanaAffinityBoost : Addition
     {
-        private IAsmHook _bonusAffinityHook;
-        private IAsmHook _affinityStartHook;
-        private IReverseWrapper<BonusAffinityFunction> _bonusAffinityReverseWrapper;
-        private IReverseWrapper<NormalAffinityFunction> _normalAffinityReverseWrapper;
-        private IReverseWrapper<AffinityStartFunction> _affinityStartReverseWrapper;
+        private IAsmHook? _bonusAffinityHook;
+        private IAsmHook? _affinityStartHook;
+        private IReverseWrapper<BonusAffinityFunction>? _bonusAffinityReverseWrapper;
+        private IReverseWrapper<NormalAffinityFunction>? _normalAffinityReverseWrapper;
+        private IReverseWrapper<AffinityStartFunction>? _affinityStartReverseWrapper;
         private IntPtr _affinityScaleAddress;
         private SocialLink currentSocialLink;
+
+        private int _checkBonusAddress = -1;
+        private int _functionStartAddress = -1;
 
         public ArcanaAffinityBoost(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
             _utils.Log("Initialising Bonus Social Link Affinity");
 
             // Get bonus addresses
-            long functionStartAddress = -1, checkBonusAddress = -1, giveBonusAddress = -1;
-            checkBonusAddress = _utils.SigScan("F3 0F 10 0D ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 8B 7A ??", "check bonus affinity");
-            functionStartAddress = _utils.SigScan("55 ?? ?? 83 EC 08 56 57 66 ?? ?? 89 55 ??", "social link affinity start");
-            giveBonusAddress = _utils.SigScan("0F 84 ?? ?? ?? ?? 47 E8 ?? ?? ?? ??", "give bonus affinity pointer");
-            if (checkBonusAddress == -1 || giveBonusAddress == -1 || functionStartAddress == -1) return;
+            _utils.SigScan("F3 0F 10 0D ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 8B 7A ??", "check bonus affinity", 
+                (address) =>
+                {
+                    _checkBonusAddress = address;
+                    if (_functionStartAddress != -1)
+                        Initialise();
+                });
+            _utils.SigScan("55 ?? ?? 83 EC 08 56 57 66 ?? ?? 89 55 ??", "social link affinity start",
+                (address) =>
+                {
+                    _functionStartAddress = address;
+                    if (_checkBonusAddress != -1)
+                        Initialise();
+                });
+        }
 
-            _memory.SafeRead((IntPtr)(giveBonusAddress + 2), out byte giveBonusOffset);
-            giveBonusAddress += giveBonusOffset + 6;
-            _utils.LogDebug($"The give bonus address is 0x{giveBonusAddress:X}");
-            _memory.SafeRead((IntPtr)(giveBonusAddress + 2), out IntPtr bonusScaleAddress);
-            _memory.SafeRead((IntPtr)(checkBonusAddress + 4), out _affinityScaleAddress);
+        /// <summary>
+        /// Initialise the addition
+        /// </summary>
+        private void Initialise()
+        {
+            _memory.SafeRead((IntPtr)(_checkBonusAddress + 4), out _affinityScaleAddress);
 
             // Get Social Link Id Hook
             string[] initialFunction =
             {
                 $"use32",
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(AffinityStart, out _affinityStartReverseWrapper)}",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(AffinityStart, out _affinityStartReverseWrapper)}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
-            _affinityStartHook = hooks.CreateAsmHook(initialFunction, functionStartAddress, AsmHookBehaviour.ExecuteFirst).Activate();
+            _affinityStartHook = _hooks.CreateAsmHook(initialFunction, _functionStartAddress, AsmHookBehaviour.ExecuteFirst).Activate();
 
             // Change Affinity Scaling Hook
             string[] function =
             {
                 $"use32",
-                // Preserve edx
-                //$"push edx",
-                //// Push increased bonus float to xmm1
-                //$"mov edx, [{bonusScaleAddress}]",
-                //$"movss xmm1, [edx + 8]",
-                //// Restore edx
-                //$"pop edx",
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(BonusAffinity, out _bonusAffinityReverseWrapper)}",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(BonusAffinity, out _bonusAffinityReverseWrapper)}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 $"movss xmm1, [{_affinityScaleAddress}]",
                 // Save xmm1 (will be unintentionally reset when resetting the 1.0 scale)
                 $"sub esp, 16", // allocate space on stack
                 $"movdqu dqword [esp], xmm1",
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(NormalAffinity, out _normalAffinityReverseWrapper)}",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(NormalAffinity, out _normalAffinityReverseWrapper)}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
                 //Pop back the value from stack to xmm1
                 $"movdqu xmm1, dqword [esp]",
                 $"add esp, 16", // re-align the stack
             };
-            _bonusAffinityHook = hooks.CreateAsmHook(function, checkBonusAddress, AsmHookBehaviour.ExecuteAfter).Activate();
+            _bonusAffinityHook = _hooks.CreateAsmHook(function, _checkBonusAddress, AsmHookBehaviour.ExecuteAfter).Activate();
             _utils.Log("Bonus Social Link Affinity initialised");
+
         }
 
         public override void Resume()

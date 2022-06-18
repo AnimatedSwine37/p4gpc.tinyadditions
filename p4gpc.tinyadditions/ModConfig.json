@@ -35,7 +35,8 @@
   "IsUniversalMod": false,
   "ModDependencies": [
     "reloaded.sharedlib.hooks",
-    "p4gpc.inputlibrary"
+    "p4gpc.inputlibrary",
+    "Reloaded.Memory.SigScan.ReloadedII"
   ],
   "OptionalDependencies": [],
   "SupportedAppId": [

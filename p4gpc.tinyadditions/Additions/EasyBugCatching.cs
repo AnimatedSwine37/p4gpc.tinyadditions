@@ -13,15 +13,15 @@ namespace p4gpc.tinyadditions.Additions
     class EasyBugCatching : Addition
     {
         // For calling C# code from ASM.
-        private IAsmHook _easyBugsHook;
+        private IAsmHook? _easyBugsHook;
 
         public EasyBugCatching(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
-            _utils.Log("Initialising Easy Bug Catching");
-            // Get the function address
-            long functionAddress = _utils.SigScan("F3 0F 2C C8 83 F9 F6", "easy bug catching");
-            if (functionAddress == -1) return;
+            _utils.SigScan("F3 0F 2C C8 83 F9 F6", "easy bug catching", Initialise);
+        }
 
+        private void Initialise(int address)
+        {
             // Create the function hook
             string[] function =
             {
@@ -31,7 +31,7 @@ namespace p4gpc.tinyadditions.Additions
                 // Always false, this would normally the check for a failed attempt
                 $"cmp ecx, -1",
             };
-            _easyBugsHook = hooks.CreateAsmHook(function, functionAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+            _easyBugsHook = _hooks.CreateAsmHook(function, address, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
             _utils.Log("Easy Bug Catching initialised");
 
             if (!_configuration.EasyBugCatchingEnabled)

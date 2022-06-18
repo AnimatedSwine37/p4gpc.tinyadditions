@@ -19,70 +19,86 @@ namespace p4gpc.tinyadditions.Additions
 {
     class CustomItems : Addition
     {
-        private IReverseWrapper<SetFunctionIdFunction> _functionIdReverseWrapper;
-        private IAsmHook _flowFunctionHook;
-        private long _flowFunctionLocation;
-        private IReverseWrapper<CheckSkillFunction> _checkSkillReverseWrapper;
-        private IAsmHook _checkSkillHook;
-        private IReverseWrapper<FreezeControlsFunction> _freezeControlsReverseWrapper;
-        private IAsmHook _freezeControlsHook;
-        private long _freezeControlsLocation;
+        private IReverseWrapper<SetFunctionIdFunction>? _functionIdReverseWrapper;
+        private IAsmHook? _flowFunctionHook;
+        private IReverseWrapper<CheckSkillFunction>? _checkSkillReverseWrapper;
+        private IAsmHook? _checkSkillHook;
+        private IReverseWrapper<FreezeControlsFunction>? _freezeControlsReverseWrapper;
+        private IAsmHook? _freezeControlsHook;
         private int _currentSkill;
-        private GetDungeonFlowLocation getDungeonFlowLocation;
+        private GetDungeonFlowLocation? getDungeonFlowLocation;
         private List<CustomItemInfo> _customItems;
-        private CustomItemInfo _currentCustomItem;
+        private CustomItemInfo? _currentCustomItem;
+        private short numInitialised = 0;
+        private int _freezeControlsLocation;
+        private int _flowFunctionLocation;
 
         public unsafe CustomItems(Utils utils, int baseAddress, Config configuration, IMemory memory, IReloadedHooks hooks) : base(utils, baseAddress, configuration, memory, hooks)
         {
             _utils.Log("Initialising custom items");
 
-            long skillIdLocation = -1;
-            _flowFunctionLocation = _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 6A 05", "custom items flow function");
-            _freezeControlsLocation = _utils.SigScan("C7 46 ?? 03 00 00 00 B8 01 00 00 00 5E 5D C3 A1 ?? ?? ?? ??", "custom items freeze controls");
-            skillIdLocation = _utils.SigScan("B8 F6 00 00 00 66 ?? ?? 75 17", "custom skill id");
+            _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 6A 05", "custom items flow function", InitFlowFunctionHook);
+            _utils.SigScan("C7 46 ?? 03 00 00 00 B8 01 00 00 00 5E 5D C3 A1 ?? ?? ?? ??", "custom items freeze controls", InitFreezeControlsHook);
+            _utils.SigScan("B8 F6 00 00 00 66 ?? ?? 75 17", "custom skill id", InitItemIdHook);
 
-            // Get the dungeon flow location
-            _memory.SafeRead((IntPtr)_flowFunctionLocation + 0x1A, out int getDungeonFlowFuncOffset);
-            //_utils.LogDebug($"Looking at 0x{_flowFunctionLocation + 0x1A:X}");
-            _utils.LogDebug($"getDungeonFlowFuncOffset is 0x{getDungeonFlowFuncOffset:X}");
-            long getDungeonFlowFuncAddress = _flowFunctionLocation + 0x19 + 5 + getDungeonFlowFuncOffset;
-            _utils.LogDebug($"The get dungeon flow address function is at 0x{getDungeonFlowFuncAddress:X}");
-            // Create a wrapper for the function that can be called
-            getDungeonFlowLocation = _hooks.CreateWrapper<GetDungeonFlowLocation>(getDungeonFlowFuncAddress, out IntPtr getDungeonFlowPointerAddress);
-            IntPtr dungeonFlowLoaction = getDungeonFlowLocation();
+            _customItems = LoadCustomItems();
+        }
 
-            // Create the function hook
+        private void InitFlowFunctionHook(int address)
+        {
+            _flowFunctionLocation = address;
             string[] flowIdFunction =
             {
                 $"use32",
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(SetFunctionId, out _functionIdReverseWrapper)}",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(SetFunctionId, out _functionIdReverseWrapper)}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
-            _flowFunctionHook = hooks.CreateAsmHook(flowIdFunction, _flowFunctionLocation, AsmHookBehaviour.ExecuteFirst).Activate();
+            _flowFunctionHook = _hooks.CreateAsmHook(flowIdFunction, address, AsmHookBehaviour.ExecuteFirst).Activate();
 
+            // Get the dungeon flow location
+            _memory.SafeRead((IntPtr)address + 0x1A, out int getDungeonFlowFuncOffset);
+            //_utils.LogDebug($"Looking at 0x{_flowFunctionLocation + 0x1A:X}");
+            _utils.LogDebug($"getDungeonFlowFuncOffset is 0x{getDungeonFlowFuncOffset:X}");
+            long getDungeonFlowFuncAddress = address + 0x19 + 5 + getDungeonFlowFuncOffset;
+            _utils.LogDebug($"The get dungeon flow address function is at 0x{getDungeonFlowFuncAddress:X}");
+            // Create a wrapper for the function that can be called
+            getDungeonFlowLocation = _hooks.CreateWrapper<GetDungeonFlowLocation>(getDungeonFlowFuncAddress, out IntPtr getDungeonFlowPointerAddress);
+            numInitialised++;
+            if(numInitialised == 3)
+                _utils.Log("Custom items initialised");
+        }
+
+        private void InitItemIdHook(int address)
+        {
             string[] itemIdFunction =
 {
                 $"use32",
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(CheckSkill, out _checkSkillReverseWrapper)}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(CheckSkill, out _checkSkillReverseWrapper)}",
                 $"cmp eax, 1",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
-            _checkSkillHook = hooks.CreateAsmHook(itemIdFunction, skillIdLocation, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+            _checkSkillHook = _hooks.CreateAsmHook(itemIdFunction, address, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+            numInitialised++;
+            if (numInitialised == 3)
+                _utils.Log("Custom items initialised");
+        }
 
+        private void InitFreezeControlsHook(int address)
+        {
+            _freezeControlsLocation = address;
             string[] freezeControlsFunction =
-            {
+{
                 $"use32",
-                $"{hooks.Utilities.PushCdeclCallerSavedRegisters()}",
-                $"{hooks.Utilities.GetAbsoluteCallMnemonics(FreezeControls, out _freezeControlsReverseWrapper)}",
-                $"{hooks.Utilities.PopCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.PushCdeclCallerSavedRegisters()}",
+                $"{_hooks.Utilities.GetAbsoluteCallMnemonics(FreezeControls, out _freezeControlsReverseWrapper)}",
+                $"{_hooks.Utilities.PopCdeclCallerSavedRegisters()}",
             };
-            _freezeControlsHook = hooks.CreateAsmHook(freezeControlsFunction, _freezeControlsLocation, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
-
-            _customItems = LoadCustomItems();
-
-            _utils.Log("Custom items initialised");
+            _freezeControlsHook = _hooks.CreateAsmHook(freezeControlsFunction, address, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+            numInitialised++;
+            if (numInitialised == 3)
+                _utils.Log("Custom items initialised");
         }
 
         public override void Resume()
@@ -111,8 +127,8 @@ namespace p4gpc.tinyadditions.Additions
                 try
                 {
                     string json = File.ReadAllText(itemFile, Encoding.UTF8);
-                    CustomItemInfo item = JsonSerializer.Deserialize<CustomItemInfo>(json);
-                    if (item.SkillId == 0 && item.FunctionName == null && item.FreezeControls == false)
+                    CustomItemInfo? item = JsonSerializer.Deserialize<CustomItemInfo>(json);
+                    if (item == null || (item.SkillId == 0 && item.FunctionName == null && item.FreezeControls == false))
                     {
                         _utils.LogError($"Invalid custom item info file {Path.GetFileName(itemFile)}");
                         continue;
@@ -131,6 +147,12 @@ namespace p4gpc.tinyadditions.Additions
 
         private void SetFunctionId(int eax)
         {
+            if (getDungeonFlowLocation == null)
+            {
+                _utils.LogError("Unable to set function id as getDungeonFlowLocation is null");
+                return;
+            }
+                
             IntPtr dungeonFlowLocation = getDungeonFlowLocation();
             _utils.LogDebug($"The dungeon flow is at 0x{dungeonFlowLocation:X}");
 

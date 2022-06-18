@@ -36,13 +36,13 @@ namespace p4gpc.tinyadditions.Additions
             _memory.Write(_shouldSwitchBgm, true);
             _encounterId = _memory.Allocate(4);
             _hooksList = new List<IAsmHook>();
-            InitialiseGetFloorId();
-            InitBtlBgmStartHook();
-            InitBtlEnterStopBgmHook();
-            InitResultsStartBgmHook();
-            InitAfterResultsStopBgmHook();
-            InitCallBattleHook();
-            InitBtlStartHook();
+            _utils.SigScan("B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C0 75 ?? ?? C9 EB 06", "get floor id", InitGetFloorId);
+            _utils.SigScan("E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 8B B1 ?? ?? ?? ??", "battle bgm start", InitBtlBgmStartHook);
+            _utils.SigScan("E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? A1 ?? ?? ?? ?? 0F 57 C0", "battle entering stop bgm", InitBtlEnterStopBgmHook);
+            _utils.SigScan("?? C9 E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 8B 40 ??", "results start bgm", InitResultsStartBgmHook);
+            _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 60 ?? FE", "after results stop bgm", InitAfterResultsStopBgmHook);
+            _utils.SigScan("E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 89 44 24 ?? 85 C9", "call battle", InitCallBattleHook);
+            _utils.SigScan("A1 ?? ?? ?? ?? F3 0F 10 05 ?? ?? ?? ?? 89 87 ?? ?? ?? ??", "battle start", InitBtlStartHook);
         }
 
         public override void Resume()
@@ -60,18 +60,16 @@ namespace p4gpc.tinyadditions.Additions
         /// <summary>
         /// Initialises the wrapper for the native get floor id function
         /// </summary>
-        private void InitialiseGetFloorId()
+        private void InitGetFloorId(int address)
         {
-            long address = _utils.SigScan("B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C0 75 ?? ?? C9 EB 06", "get floor id");
             _getFloorId = _hooks.CreateWrapper<GetFloorId>(address, out IntPtr getFloorIdAddress);
         }
 
         /// <summary>
         /// Initialises the a hook for the call battle flow function so the encounter id can be stored
         /// </summary>
-        private void InitCallBattleHook()
+        private void InitCallBattleHook(int address)
         {
-            long address = _utils.SigScan("E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 89 44 24 ?? 85 C9", "call battle");
             string[] function =
             {
                 "use32",
@@ -88,9 +86,8 @@ namespace p4gpc.tinyadditions.Additions
         /// <summary>
         /// Initialises the hook that controls battle bgm starting
         /// </summary>
-        private void InitBtlBgmStartHook()
+        private void InitBtlBgmStartHook(int address)
         {
-            long address = _utils.SigScan("E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 8B B1 ?? ?? ?? ??", "battle bgm start");
             string[] function =
             {
                 "use32",
@@ -108,9 +105,8 @@ namespace p4gpc.tinyadditions.Additions
         /// <summary>
         /// Initialises the hook that controls regular bgm stopping when entering a battle
         /// </summary>
-        private void InitBtlEnterStopBgmHook()
+        private void InitBtlEnterStopBgmHook(int address)
         {
-            long address = _utils.SigScan("E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? A1 ?? ?? ?? ?? 0F 57 C0", "battle entering stop bgm");
             string[] function =
             {
                 "use32",
@@ -131,9 +127,8 @@ namespace p4gpc.tinyadditions.Additions
         /// <summary>
         /// Initialises the hook that controls the results screen bgm starting
         /// </summary>
-        private void InitResultsStartBgmHook()
+        private void InitResultsStartBgmHook(int address)
         {
-            long address = _utils.SigScan("?? C9 E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 8B 40 ??", "results start bgm");
             string[] function =
             {
                 "use32",
@@ -151,9 +146,8 @@ namespace p4gpc.tinyadditions.Additions
         /// <summary>
         /// Initialises the hook that controls bgm stoppping after the results screen is closed
         /// </summary>
-        private void InitAfterResultsStopBgmHook()
+        private void InitAfterResultsStopBgmHook(int address)
         {
-            long address = _utils.SigScan("E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 60 ?? FE", "after results stop bgm");
             string[] function =
             {
                 "use32",
@@ -174,9 +168,8 @@ namespace p4gpc.tinyadditions.Additions
         /// Initialises the hook that happens just before a battle starts when hit by or hitting an enemy
         /// Used so music can persist after a boss battle properly
         /// </summary>
-        private void InitBtlStartHook()
+        private void InitBtlStartHook(int address)
         {
-            long address = _utils.SigScan("A1 ?? ?? ?? ?? F3 0F 10 05 ?? ?? ?? ?? 89 87 ?? ?? ?? ??", "battle start");
             string[] function =
             {
                 "use32",
